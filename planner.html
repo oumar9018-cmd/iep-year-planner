@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IEP Year Planner — work out this year&#x27;s deadlines (free)</title>
+<meta name="description" content="Free in-browser planner: enter your IEP dates and see your annual review, reevaluation, evaluation and transition deadlines, using your state&#x27;s verified timeline.">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="wordmark" href="/">IEP Year Planner</a>
+<nav><a href="/planner.html">Free planner</a><a href="/states/">State timelines</a><a href="/#offer">The organiser</a></nav>
+</div></header>
+<main><div class="wrap">
+
+<h1>IEP Year Planner</h1>
+<p class="lede">Enter the dates you already have. The planner does the calendar work — including
+school-day timelines — and lists what is due this year.</p>
+<p class="small">Nothing you type here is sent anywhere. The maths runs in your browser, on this
+device. There is no account and nothing is stored.</p>
+
+<form id="planner-form">
+<fieldset>
+<legend>Your state</legend>
+<div class="field">
+<label for="p-state">State</label>
+<select id="p-state"></select>
+<p class="hint" id="p-state-note"></p>
+</div>
+</fieldset>
+
+<fieldset>
+<legend>Dates you may have (fill in any you know)</legend>
+<div class="field">
+<label for="p-start" id="p-start-label">Date you signed consent for an initial evaluation</label>
+<input type="date" id="p-start">
+<p class="hint" id="p-start-hint">Leave blank if your child already has an IEP and no new evaluation is pending.</p>
+</div>
+<div class="field">
+<label for="p-annual">Date of the last annual IEP review</label>
+<input type="date" id="p-annual">
+</div>
+<div class="field">
+<label for="p-eval">Date of the last evaluation or reevaluation</label>
+<input type="date" id="p-eval">
+</div>
+<div class="field">
+<label for="p-dob">Child's date of birth <span class="hint">(used only to work out the transition-planning milestone)</span></label>
+<input type="date" id="p-dob">
+</div>
+</fieldset>
+<button type="submit" class="button">Work out my deadlines</button>
+</form>
+
+<div id="results" aria-live="polite"></div>
+
+<div class="panel">
+<h2>How the dates are worked out</h2>
+<ul>
+<li><strong>Annual review:</strong> 12 months after the last one — federal law requires a review at least once a year.</li>
+<li><strong>Reevaluation:</strong> 3 years after the last evaluation — the federal outside date, unless you and the school have agreed in writing that one is not needed.</li>
+<li><strong>Initial evaluation:</strong> your state's own timeline, taken from its published rules (the source is linked on your state's page). States that count <em>school days</em> are counted here Monday to Friday — <strong>an approximation</strong>: school holidays and breaks are not counted here, and your district's calendar decides the exact date.</li>
+<li><strong>Transition planning:</strong> it must be in the IEP that is in effect on the birthday shown — your state's age, or 16 where the state follows the federal rule.</li>
+</ul>
+<p class="small">These dates are planning aids based on published rules, not legal advice. If a date here
+disagrees with a notice from your school, the school's notice and your
+<a href="https://www.parentcenterhub.org/find-your-center/">Parent Center</a> are the place to check it.</p>
+</div>
+<script src="/assets/planner-core.js"></script>
+<script src="/assets/states-data.js"></script>
+<script src="/assets/planner.js"></script>
+
+</div></main>
+<footer class="site"><div class="wrap">
+<p>Timelines shown here are general information taken from published federal and state rules — not legal advice, and not a substitute for the notices your school district sends you. Your state&#x27;s Parent Center can confirm the dates that apply to your child.</p>
+<p>Free help: <a href="https://www.parentcenterhub.org/find-your-center/">Find your state's Parent Training and Information Center</a> (federally funded, free to parents).</p>
+<p class="small">Every timeline figure on this site is taken from the official source linked on the page where it appears. Last data check: November 2026.</p>
+</div></footer>
+</body>
+</html>

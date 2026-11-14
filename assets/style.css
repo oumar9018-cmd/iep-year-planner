@@ -1,0 +1,84 @@
+/* IEP Year Planner — validation test site.
+   Design intent: government-clear minimalism. System fonts, one navy,
+   hairline rules, no images, no gradients, nothing decorative that
+   does not carry information. */
+:root {
+  --ink: #1b1b1b;
+  --navy: #112e51;
+  --blue: #005ea8;
+  --paper: #ffffff;
+  --panel: #f4f4f2;
+  --line: #dfe1e2;
+  --warn-bg: #faf3d1;
+  --warn-line: #e5c542;
+}
+* { box-sizing: border-box; }
+html { font-size: 18px; }
+body {
+  margin: 0; color: var(--ink); background: var(--paper);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.55;
+}
+.wrap { max-width: 46rem; margin: 0 auto; padding: 0 1rem; }
+header.site {
+  border-bottom: 3px solid var(--navy); padding: 0.9rem 0;
+}
+header.site .wrap { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; align-items: baseline; }
+.wordmark { font-weight: 700; color: var(--navy); font-size: 1.15rem; text-decoration: none; }
+header.site nav a { color: var(--blue); margin-right: 1rem; font-size: 0.95rem; }
+main { padding: 1.6rem 0 2.5rem; }
+h1 { font-size: 1.9rem; line-height: 1.2; color: var(--navy); margin: 0.4rem 0 0.8rem; }
+h2 { font-size: 1.3rem; color: var(--navy); margin: 1.8rem 0 0.5rem; }
+h3 { font-size: 1.05rem; margin: 1.2rem 0 0.3rem; }
+p, li { font-size: 1rem; }
+a { color: var(--blue); }
+.lede { font-size: 1.12rem; }
+.panel {
+  background: var(--panel); border: 1px solid var(--line);
+  padding: 1rem 1.1rem; margin: 1.2rem 0;
+}
+.offer { border: 2px solid var(--navy); padding: 1.1rem 1.2rem; margin: 1.6rem 0; }
+.offer .price { font-size: 1.5rem; font-weight: 700; color: var(--navy); }
+.honesty { font-size: 0.92rem; }
+.honesty li { margin-bottom: 0.35rem; }
+form.waitlist { margin-top: 0.8rem; }
+form.waitlist label { display: block; font-weight: 600; margin-bottom: 0.3rem; }
+form.waitlist input[type="email"] {
+  width: 100%; max-width: 26rem; padding: 0.55rem; font-size: 1rem;
+  border: 1px solid #757575;
+}
+form.waitlist button, .button {
+  display: inline-block; background: var(--navy); color: #fff; border: 0;
+  padding: 0.6rem 1.2rem; font-size: 1rem; font-weight: 600; cursor: pointer;
+  text-decoration: none; margin-top: 0.6rem;
+}
+table.rules { border-collapse: collapse; width: 100%; margin: 0.8rem 0; }
+table.rules th, table.rules td {
+  border: 1px solid var(--line); padding: 0.55rem 0.7rem; text-align: left;
+  vertical-align: top; font-size: 0.97rem;
+}
+table.rules th { background: var(--panel); width: 34%; }
+.unverified {
+  background: var(--warn-bg); border: 1px solid var(--warn-line);
+  padding: 0.7rem 0.9rem; font-size: 0.95rem; margin: 0.8rem 0;
+}
+.source { font-size: 0.88rem; color: #444; }
+fieldset { border: 1px solid var(--line); margin: 0 0 1.1rem; padding: 1rem 1.1rem; }
+legend { font-weight: 700; color: var(--navy); padding: 0 0.3rem; }
+.field { margin-bottom: 0.9rem; }
+.field label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+.field input, .field select { padding: 0.5rem; font-size: 1rem; border: 1px solid #757575; }
+.field .hint { font-size: 0.88rem; color: #444; font-weight: 400; }
+#results { margin-top: 1.4rem; }
+.deadline { border-left: 5px solid var(--navy); padding: 0.5rem 0 0.5rem 0.9rem; margin-bottom: 1.1rem; }
+.deadline .when { font-size: 1.25rem; font-weight: 700; color: var(--navy); }
+.deadline .basis { font-size: 0.92rem; color: #333; }
+dl.states { columns: 2; column-gap: 2rem; }
+dl.states div { break-inside: avoid; margin-bottom: 0.4rem; }
+footer.site {
+  border-top: 1px solid var(--line); padding: 1.4rem 0 2rem;
+  font-size: 0.9rem; color: #333;
+}
+.small { font-size: 0.88rem; }
+@media (max-width: 34rem) { dl.states { columns: 1; } h1 { font-size: 1.55rem; } }

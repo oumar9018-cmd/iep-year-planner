@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://oumar9018-cmd.github.io/iep-year-planner/sitemap.xml
