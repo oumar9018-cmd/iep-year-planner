@@ -13,9 +13,9 @@
   var ANON_KEY = window.IEPAuth.ANON_KEY;
 
   var PLAN_LIMITS = {
-    free:    { label: "Free",    children: 1, documents: 5 },
-    monthly: { label: "Monthly", children: 5, documents: 200 },
-    yearly:  { label: "Yearly",  children: 5, documents: 200 }
+    free:    { label: "Free",    children: 1, documents: 5,   services: 1,  serviceHistory: "month" },
+    monthly: { label: "Monthly", children: 5, documents: 200, services: 10, serviceHistory: "all" },
+    yearly:  { label: "Yearly",  children: 5, documents: 200, services: 10, serviceHistory: "all" }
   };
 
   var session = null;
@@ -195,6 +195,74 @@
     return '<span class="badge ok">In ' + d.daysLeft + ' days</span>';
   }
 
+  // ---------- service-minutes math (pure — unit-tested via IEPApp) ------
+  // Weeks run Monday–Sunday. A month's promised minutes are the weekly
+  // promise prorated by the days in that month (perWeek × days ÷ 7) —
+  // the explainable figure a "minutes per week" line in an IEP implies
+  // for a whole month. Gaps are framed as "not yet logged": the log is
+  // the parent's own record, never a verdict on the school.
+  var MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+  function monthLabel(key) { return MONTH_NAMES[+key.slice(5, 7) - 1] + " " + key.slice(0, 4); }
+  function monthKeyOf(iso) { return iso.slice(0, 7); }
+  function shiftMonthKey(key, delta) {
+    var y = +key.slice(0, 4), m = +key.slice(5, 7) - 1 + delta;
+    var d = new Date(Date.UTC(y, m, 1));
+    function p(n) { return (n < 10 ? "0" : "") + n; }
+    return d.getUTCFullYear() + "-" + p(d.getUTCMonth() + 1);
+  }
+  function monthRange(key) {
+    var y = +key.slice(0, 4), m = +key.slice(5, 7);
+    var days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    function p(n) { return (n < 10 ? "0" : "") + n; }
+    return { key: key, start: key + "-01", end: key + "-" + p(days), days: days, label: monthLabel(key) };
+  }
+  function weekStartISO(iso) {
+    var core = window.PlannerCore;
+    var dow = core.parseISO(iso).getUTCDay(); // 0 = Sunday
+    return core.addCalendarDays(iso, -((dow + 6) % 7)); // back to Monday
+  }
+  function sumLogsIn(logs, fromISO, toISO) {
+    var delivered = 0, missed = 0;
+    (logs || []).forEach(function (l) {
+      if (l.date >= fromISO && l.date <= toISO) {
+        delivered += (l.minutes_delivered || 0);
+        if (l.missed) missed++;
+      }
+    });
+    return { delivered: delivered, missed: missed };
+  }
+  // Summary for one service: the week containing `today`, plus the month
+  // named by `viewKey` ("YYYY-MM"; defaults to today's month).
+  function serviceSummary(service, logs, today, viewKey) {
+    var perWeek = service.minutes_per_week || 0;
+    var ws = weekStartISO(today);
+    var wk = sumLogsIn(logs, ws, window.PlannerCore.addCalendarDays(ws, 6));
+    var mr = monthRange(viewKey || monthKeyOf(today));
+    var mPromised = Math.round(perWeek * mr.days / 7);
+    var mo = sumLogsIn(logs, mr.start, mr.end);
+    return {
+      week: {
+        start: ws, end: window.PlannerCore.addCalendarDays(ws, 6),
+        promised: perWeek, delivered: wk.delivered, missed: wk.missed,
+        gap: Math.max(0, perWeek - wk.delivered)
+      },
+      month: {
+        key: mr.key, label: mr.label, start: mr.start, end: mr.end,
+        promised: mPromised, delivered: mo.delivered, missed: mo.missed,
+        gap: Math.max(0, mPromised - mo.delivered)
+      }
+    };
+  }
+  // Dashboard strip totals: every service's promise for the current week.
+  function servicesWeekTotals(services, logs, today) {
+    var ws = weekStartISO(today);
+    var wk = sumLogsIn(logs, ws, window.PlannerCore.addCalendarDays(ws, 6));
+    var promised = 0;
+    (services || []).forEach(function (s) { promised += (s.minutes_per_week || 0); });
+    return { promised: promised, delivered: wk.delivered, missed: wk.missed, gap: Math.max(0, promised - wk.delivered) };
+  }
+
   // ---------- shell ---------------------------------------------------------
   function fillStateSelect(sel, value) {
     if (!sel) return;
@@ -233,6 +301,12 @@
   function loadMeetings() {
     return apiGet("meetings", "user_id=eq." + session.user.id + "&select=*&order=date.desc");
   }
+  function loadServices() {
+    return apiGet("services", "user_id=eq." + session.user.id + "&select=*&order=created_at.asc");
+  }
+  function loadServiceLogs() {
+    return apiGet("service_logs", "user_id=eq." + session.user.id + "&select=*&order=date.desc,created_at.desc");
+  }
 
   // ==========================================================================
   // PAGE: dashboard
@@ -268,7 +342,7 @@
       } else {
         dbox.innerHTML = deadlines.slice(0, 6).map(function (d) {
           return '<div class="deadline-row"><div class="deadline-main"><strong>' + esc(d.title) + '</strong>' +
-            '<span class="meta"> · ' + esc(d.childName) + '</span><div class="meta">' + esc(d.dueText) +
+            '<div class="meta">' + esc(d.childName) + ' · ' + esc(d.dueText) +
             (d.approx ? ' <span title="Counted Monday–Friday without holidays or school breaks">(approx.)</span>' : '') +
             (d.verifiedOn ? ' · Rules last verified ' + esc(d.verifiedOn) : '') +
             '</div></div>' + deadlineBadge(d) + '</div>';
@@ -286,6 +360,31 @@
                 '<div class="meta">' + esc(window.PlannerCore ? window.PlannerCore.pretty(m.date) : m.date) + '</div></div></div>';
             }).join("")
           : '<p class="meta">No upcoming meetings logged.</p>';
+      }
+
+      // Services strip loads on its own chain: if the services tables
+      // are not in place yet (iep-services.sql not run), the rest of the
+      // dashboard must still render.
+      var sbox = $("#dash-services");
+      if (sbox) {
+        Promise.all([loadServices(), loadServiceLogs()]).then(function (sres) {
+          var services = sres[0] || [], serviceLogs = sres[1] || [];
+          if (!services.length) {
+            sbox.innerHTML = '<p class="meta">No services tracked yet. Log the minutes the IEP promises — speech, OT, and more — as they happen.</p>' +
+              '<a class="btn small" href="services.html">Add a service</a>';
+            return;
+          }
+          var tot = servicesWeekTotals(services, serviceLogs, todayISO());
+          sbox.innerHTML = '<div class="deadline-row"><div class="deadline-main">' +
+            '<strong>Promised ' + tot.promised + ' min · delivered ' + tot.delivered + ' min</strong>' +
+            '<div class="meta">' + (tot.gap > 0
+              ? tot.gap + ' min not yet logged this week'
+              : 'Promised minutes covered this week') +
+            ' · across ' + services.length + (services.length === 1 ? ' service' : ' services') + '</div></div>' +
+            '<a class="btn small" href="services.html">Services</a></div>';
+        }).catch(function () {
+          sbox.innerHTML = '<p class="meta">Service minutes could not be loaded just now.</p>';
+        });
       }
     }).catch(function (err) { showMsg(err.message, "error"); });
   }
@@ -593,6 +692,220 @@
   }
 
   // ==========================================================================
+  // PAGE: services (service-minutes log)
+  // ==========================================================================
+  function initServices() {
+    var form = $("#svc-form");
+    var listEl = $("#svc-list");
+    var pagerEl = $("#svc-pager");
+    var note = $("#svc-limit-note");
+    var servicesCache = [], logsCache = [], childrenCache = [];
+    var viewKey = monthKeyOf(todayISO()); // month shown in the entries lists
+    var lastLogDate = todayISO();          // repeat logging stays on the day in use
+
+    function historyLocked() { return limits().serviceHistory !== "all"; }
+    function logsFor(serviceId) {
+      return logsCache.filter(function (l) { return l.service_id === serviceId; });
+    }
+    function childName(id) {
+      var c = childrenCache.filter(function (x) { return x.id === id; })[0];
+      return c ? c.name : "";
+    }
+    function prettyDate(iso) { return window.PlannerCore ? window.PlannerCore.pretty(iso) : iso; }
+
+    function renderPager() {
+      var cur = monthKeyOf(todayISO());
+      if (historyLocked()) {
+        pagerEl.innerHTML = '<p class="meta">Showing <strong>' + monthLabel(cur) + '</strong> — your ' +
+          limits().label + ' plan shows the current month. <a href="plans.html">See plans</a> for the full history.</p>';
+        return;
+      }
+      pagerEl.innerHTML = '<div class="card-actions">' +
+        '<button class="btn small" type="button" data-pager="-1">‹ Earlier</button>' +
+        '<strong>' + monthLabel(viewKey) + '</strong>' +
+        '<button class="btn small" type="button" data-pager="1"' + (viewKey >= cur ? " disabled" : "") + '>Later ›</button></div>';
+      $all("[data-pager]", pagerEl).forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var next = shiftMonthKey(viewKey, +btn.getAttribute("data-pager"));
+          if (next > cur) next = cur;
+          viewKey = next;
+          render();
+        });
+      });
+    }
+
+    function render() {
+      var lim = limits();
+      var editing = !!$("#svc-id").value;
+      if (!childrenCache.length) {
+        note.innerHTML = 'Services are tracked per child — <a href="children.html">add your child</a> first, then add the services in their IEP.';
+      } else if (servicesCache.length >= lim.services && !editing) {
+        note.innerHTML = 'Your <strong>' + lim.label + '</strong> plan covers ' + lim.services +
+          (lim.services === 1 ? ' service' : ' services') + ' — you have reached the limit. <a href="plans.html">See plans</a> to track more.';
+      } else {
+        note.innerHTML = 'Your <strong>' + lim.label + '</strong> plan covers ' + lim.services +
+          (lim.services === 1 ? ' service' : ' services') + ' (' + servicesCache.length + ' added).';
+      }
+      $("#svc-submit").disabled = !childrenCache.length || (!editing && servicesCache.length >= lim.services);
+
+      if (!servicesCache.length) {
+        listEl.innerHTML = '<div class="empty"><p>No services yet. Add the first one with the form above — speech therapy, occupational therapy, counselling, and anything else the IEP promises.</p></div>';
+        return;
+      }
+      var mr = monthRange(viewKey);
+      var curStart = monthRange(monthKeyOf(todayISO())).start;
+      listEl.innerHTML = servicesCache.map(function (s) {
+        var logs = logsFor(s.id);
+        var sum = serviceSummary(s, logs, todayISO(), viewKey);
+        var entries = logs.filter(function (l) { return l.date >= mr.start && l.date <= mr.end; });
+        var older = historyLocked()
+          ? logs.filter(function (l) { return l.date < curStart; }).length : 0;
+        var html = '<article class="card"><h3>' + esc(s.name) + '</h3>' +
+          '<p class="meta">' + (s.child_id ? esc(childName(s.child_id)) + ' · ' : '') +
+          'Promised ' + s.minutes_per_week + ' min/week</p>' +
+          '<p class="meta">This week (Mon–Sun): logged <strong>' + sum.week.delivered + ' min</strong> of ' +
+          sum.week.promised + ' min · ' + (sum.week.gap > 0 ? sum.week.gap + ' min not yet logged' : 'promised minutes covered') +
+          (sum.week.missed ? ' · ' + sum.week.missed + (sum.week.missed === 1 ? ' session' : ' sessions') + ' marked missed' : '') + '</p>' +
+          '<p class="meta">' + sum.month.label + ': logged <strong>' + sum.month.delivered + ' min</strong> of about ' +
+          sum.month.promised + ' min · ' + (sum.month.gap > 0 ? sum.month.gap + ' min not yet logged' : 'promised minutes covered') +
+          (sum.month.missed ? ' · ' + sum.month.missed + (sum.month.missed === 1 ? ' session' : ' sessions') + ' marked missed' : '') + '</p>' +
+          '<form data-logform="' + s.id + '">' +
+          '<label>Date <input type="date" class="lg-date" value="' + lastLogDate + '" required></label>' +
+          '<label>Minutes delivered <input type="number" class="lg-minutes" min="1" max="1440" step="1" inputmode="numeric" placeholder="30"></label>' +
+          '<label><input type="checkbox" class="lg-missed"> Missed — no session</label>' +
+          '<label>Note (optional) <input type="text" class="lg-note" maxlength="200" placeholder="Optional note"></label>' +
+          '<button class="btn small" type="submit">Log minutes</button></form>' +
+          '<div>' + (entries.length ? entries.map(function (l) {
+            return '<div class="doc-row"><div class="doc-main"><strong>' + esc(prettyDate(l.date)) + '</strong>' +
+              (l.missed ? ' <span class="badge soon">Missed</span>' : '') +
+              '<div class="meta">' + (l.missed ? 'No session' : l.minutes_delivered + ' min') +
+              (l.note ? ' · ' + esc(l.note) : '') + '</div></div>' +
+              '<div class="card-actions"><button class="btn small danger" type="button" data-log-del="' + l.id + '">Delete</button></div></div>';
+          }).join("") : '<p class="meta">No entries logged in ' + mr.label + ' yet.</p>') + '</div>' +
+          (older ? '<p class="meta">+ ' + older + (older === 1 ? ' earlier entry' : ' earlier entries') +
+            ' saved — your ' + lim.label + ' plan shows this month. <a href="plans.html">See plans</a> for the full history.</p>' : '') +
+          '<div class="card-actions"><button class="btn small" type="button" data-svc-edit="' + s.id + '">Edit</button>' +
+          '<button class="btn small danger" type="button" data-svc-del="' + s.id + '">Delete service</button></div></article>';
+        return html;
+      }).join("");
+
+      $all("[data-svc-edit]", listEl).forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var s = servicesCache.filter(function (x) { return x.id === btn.getAttribute("data-svc-edit"); })[0];
+          if (!s) return;
+          $("#svc-id").value = s.id;
+          $("#svc-name").value = s.name || "";
+          $("#svc-minutes").value = s.minutes_per_week || "";
+          $("#svc-child").value = s.child_id || "";
+          $("#svc-submit").textContent = "Save changes";
+          $("#svc-submit").disabled = false;
+          $("#svc-cancel").hidden = false;
+          form.scrollIntoView({ behavior: "smooth" });
+        });
+      });
+      $all("[data-svc-del]", listEl).forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var s = servicesCache.filter(function (x) { return x.id === btn.getAttribute("data-svc-del"); })[0];
+          if (!s) return;
+          if (!window.confirm("Delete \"" + s.name + "\" and all its log entries?")) return;
+          apiDelete("services", "id=eq." + s.id)
+            .then(function () { showMsg("Service deleted."); refresh(); })
+            .catch(function (err) { showMsg(err.message, "error"); });
+        });
+      });
+      $all("[data-log-del]", listEl).forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          if (!window.confirm("Delete this log entry?")) return;
+          apiDelete("service_logs", "id=eq." + btn.getAttribute("data-log-del"))
+            .then(function () { showMsg("Entry deleted."); refresh(); })
+            .catch(function (err) { showMsg(err.message, "error"); });
+        });
+      });
+      $all(".lg-missed", listEl).forEach(function (box) {
+        box.addEventListener("change", function () {
+          var mins = box.closest("form").querySelector(".lg-minutes");
+          if (mins) { mins.disabled = box.checked; if (box.checked) mins.value = ""; }
+        });
+      });
+      $all("form[data-logform]", listEl).forEach(function (lf) {
+        lf.addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          var date = lf.querySelector(".lg-date").value;
+          var missed = lf.querySelector(".lg-missed").checked;
+          var minsRaw = lf.querySelector(".lg-minutes").value;
+          var mins = missed ? 0 : parseInt(minsRaw, 10);
+          if (!date) { showMsg("Pick the date of the session.", "error"); return; }
+          if (date > todayISO()) { showMsg("That date is still in the future — log a session after it happens.", "error"); return; }
+          if (historyLocked() && date < monthRange(monthKeyOf(todayISO())).start) {
+            showMsg("Your " + limits().label + " plan logs entries for this month. See Plans for the full history.", "error");
+            return;
+          }
+          if (!missed && !(mins > 0)) { showMsg("Enter the minutes delivered, or tick Missed if there was no session.", "error"); return; }
+          lastLogDate = date;
+          apiInsert("service_logs", {
+            user_id: session.user.id,
+            service_id: lf.getAttribute("data-logform"),
+            date: date,
+            minutes_delivered: mins,
+            missed: missed,
+            note: lf.querySelector(".lg-note").value.trim()
+          }).then(function () { showMsg("Logged."); refresh(); })
+            .catch(function (err) { showMsg(err.message, "error"); });
+        });
+      });
+    }
+
+    function refresh() {
+      Promise.all([loadServices(), loadServiceLogs(), loadChildren()]).then(function (res) {
+        servicesCache = res[0] || [];
+        logsCache = res[1] || [];
+        childrenCache = res[2] || [];
+        var keepChild = $("#svc-child").value;
+        fillChildSelect($("#svc-child"), childrenCache, false);
+        if (keepChild) $("#svc-child").value = keepChild;
+        renderPager();
+        render();
+      }).catch(function (err) { showMsg(err.message, "error"); });
+    }
+
+    $("#svc-cancel").addEventListener("click", function () {
+      form.reset();
+      $("#svc-id").value = "";
+      $("#svc-submit").textContent = "Add service";
+      $("#svc-cancel").hidden = true;
+      render();
+    });
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var id = $("#svc-id").value;
+      var row = {
+        user_id: session.user.id,
+        name: $("#svc-name").value.trim(),
+        minutes_per_week: parseInt($("#svc-minutes").value, 10),
+        child_id: $("#svc-child").value || null
+      };
+      if (!row.name) { showMsg("Give the service a name (for example: Speech therapy).", "error"); return; }
+      if (!(row.minutes_per_week > 0)) { showMsg("Enter the minutes per week promised in the IEP.", "error"); return; }
+      if (!id && servicesCache.length >= limits().services) {
+        showMsg("Your " + limits().label + " plan covers " + limits().services + " service(s). See Plans to track more.", "error");
+        return;
+      }
+      var op = id
+        ? apiPatch("services", "id=eq." + id, { name: row.name, minutes_per_week: row.minutes_per_week, child_id: row.child_id })
+        : apiInsert("services", row);
+      op.then(function () {
+        showMsg(id ? "Changes saved." : "Service added.");
+        form.reset();
+        $("#svc-id").value = "";
+        $("#svc-submit").textContent = "Add service";
+        $("#svc-cancel").hidden = true;
+        refresh();
+      }).catch(function (err) { showMsg(err.message, "error"); });
+    });
+    refresh();
+  }
+
+  // ==========================================================================
   // PAGE: settings
   // ==========================================================================
   function initSettings() {
@@ -601,7 +914,10 @@
     fillStateSelect($("#set-state"), profile.state || "");
     $("#set-plan").innerHTML = '<strong>' + limits().label + '</strong> plan · ' +
       limits().children + (limits().children === 1 ? ' child' : ' children') + ', ' +
-      limits().documents + ' documents. <a href="plans.html">Compare plans</a>';
+      limits().documents + ' documents, ' +
+      limits().services + (limits().services === 1 ? ' service' : ' services') +
+      (limits().serviceHistory === 'all' ? ' with full minute history' : ' with this month of minute history') +
+      '. <a href="plans.html">Compare plans</a>';
     $("#set-form").addEventListener("submit", function (ev) {
       ev.preventDefault();
       apiPatch("profiles", "id=eq." + session.user.id, {
@@ -651,7 +967,7 @@
       .then(function () {
         initShell(page);
         ({ dashboard: initDashboard, children: initChildren, documents: initDocuments,
-           notes: initNotes, settings: initSettings, plans: initPlans })[page]();
+           notes: initNotes, services: initServices, settings: initSettings, plans: initPlans })[page]();
       })
       .catch(function (err) {
         if (err && err.message !== "not-signed-in") showMsg(err.message || "Something went wrong loading your account.", "error");
@@ -661,6 +977,10 @@
   window.IEPApp = {
     PLAN_LIMITS: PLAN_LIMITS,
     deadlinesForChild: deadlinesForChild,
+    serviceSummary: serviceSummary,
+    servicesWeekTotals: servicesWeekTotals,
+    weekStartISO: weekStartISO,
+    monthRange: monthRange,
     getProfile: function () { return profile; },
     getSession: function () { return session; }
   };

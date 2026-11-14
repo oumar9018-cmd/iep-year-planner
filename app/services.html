@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Services — IEP Year Planner</title>
+<link rel="stylesheet" href="../assets/app.css?v=4">
+</head>
+<body data-page="services">
+<header class="appbar">
+  <a class="brand" href="dashboard.html">IEP Year Planner</a>
+  <span class="appbar-user" data-user-email></span>
+</header>
+<nav class="appnav">
+  <a href="dashboard.html" data-nav="dashboard">Dashboard</a>
+  <a href="children.html" data-nav="children">Children</a>
+  <a href="documents.html" data-nav="documents">Documents</a>
+  <a href="notes.html" data-nav="notes">Notes</a>
+  <a href="services.html" data-nav="services">Services</a>
+  <a href="plans.html" data-nav="plans">Plans</a>
+  <a href="settings.html" data-nav="settings">Settings</a>
+</nav>
+<main class="wrap">
+  <div id="app-msg" class="app-msg info" hidden></div>
+
+  <div class="page-head">
+    <h1>Services &amp; minutes</h1>
+    <p>The services written into your child's IEP — and a quick record of the minutes that actually happen. Logging a session takes seconds: date, minutes, done.</p>
+  </div>
+
+  <div class="limit-note" id="svc-limit-note"></div>
+
+  <form class="panel" id="svc-form">
+    <input type="hidden" id="svc-id">
+    <label>Service name
+      <input type="text" id="svc-name" placeholder="Speech therapy" autocomplete="off" required>
+    </label>
+    <label>Minutes promised per week
+      <input type="number" id="svc-minutes" min="1" max="10080" step="1" inputmode="numeric" placeholder="60" required>
+      <span class="hint">Use the minutes per week written in the IEP — for example, speech therapy at 60 minutes a week.</span>
+    </label>
+    <label>Child
+      <select id="svc-child"></select>
+    </label>
+    <button class="btn block" type="submit" id="svc-submit">Add service</button>
+    <button class="btn ghost block" type="button" id="svc-cancel" hidden>Cancel editing</button>
+  </form>
+
+  <section class="block">
+    <h2>Your services</h2>
+    <div id="svc-pager"></div>
+    <div id="svc-list"></div>
+  </section>
+
+  <p class="app-foot">Promised minutes come from the IEP itself. This log is your own record — the totals only ever reflect what you have logged.</p>
+</main>
+<script src="../assets/states-data.js"></script>
+<script src="../assets/planner-core.js"></script>
+<script src="../assets/auth.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>
