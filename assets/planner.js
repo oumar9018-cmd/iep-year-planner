@@ -66,6 +66,7 @@
       box.innerHTML = "<div class='panel'><p>Enter at least one date above and the planner will work out the deadlines that follow from it.</p></div>";
       return;
     }
+    if (window.iepTrack) window.iepTrack("planner_complete", sel.value);
     var htmlOut = "<h2>Your deadlines</h2>";
     list.forEach(function (d) {
       htmlOut += "<div class='deadline'><div>" + d.title + "</div>" +
