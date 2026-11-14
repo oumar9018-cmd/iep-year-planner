@@ -82,21 +82,23 @@
   }
 
   // The deadline a parent should look at first, from one child's list:
-  // the most overdue one if anything is past due (it has waited the
-  // longest), otherwise the earliest upcoming date. "Today" counts as
-  // upcoming, not overdue. Matches the app's existing "next" notion —
-  // computeDeadlines sorts by due date, so this is the first row of a
-  // sorted list — but it does not assume the input arrives sorted,
-  // and it never mutates the input.
+  // if anything is past due, the MOST RECENTLY missed one (the latest
+  // due date among the overdue) — the freshest miss is the most
+  // fixable, and it is usually the one blocking everything else; a
+  // deadline missed months ago should not outrank it. Otherwise the
+  // earliest upcoming date. "Today" counts as upcoming, not overdue.
+  // Does not assume the input arrives sorted, and never mutates it.
   function pickNextDeadline(deadlines, todayISO) {
     if (!deadlines || !deadlines.length) return null;
     var sorted = deadlines.slice().sort(function (a, b) {
       return a.dueISO < b.dueISO ? -1 : a.dueISO > b.dueISO ? 1 : 0;
     });
+    var next = null;
     for (var i = 0; i < sorted.length; i++) {
-      if (sorted[i].dueISO < todayISO) return sorted[i]; // most overdue
+      if (sorted[i].dueISO < todayISO) next = sorted[i]; // latest overdue so far
+      else break;
     }
-    return sorted[0]; // earliest upcoming (or due today)
+    return next || sorted[0]; // most recently missed, else earliest upcoming (or due today)
   }
   // Is `target` the picked next deadline of the same list? Compared by
   // kind + due date, the pair that identifies a row for one child.

@@ -90,22 +90,25 @@
   }
 
   // La fecha límite que un padre o una madre debería mirar primero,
-  // de la lista de un niño: la más vencida si alguna ya pasó (es la
-  // que más ha esperado); si no, la fecha próxima más cercana. "Hoy"
-  // cuenta como próxima, no como vencida. Igual que la noción de
-  // «siguiente» de la versión en inglés — computeDeadlines ordena
-  // por fecha de vencimiento, así que esta es la primera fila de una
-  // lista ordenada — pero no supone que la entrada llegue ordenada
-  // y nunca la modifica.
+  // de la lista de un niño: si alguna ya pasó, la vencida MÁS
+  // RECIENTE (la fecha de vencimiento más tardía entre las vencidas)
+  // — el incumplimiento más fresco es el más fácil de corregir y
+  // suele ser el que bloquea todo lo demás; una fecha vencida hace
+  // meses no debe tener prioridad sobre ella. Si ninguna pasó, la
+  // fecha próxima más cercana. "Hoy" cuenta como próxima, no como
+  // vencida. Igual que la versión en inglés — no supone que la
+  // entrada llegue ordenada y nunca la modifica.
   function pickNextDeadline(deadlines, todayISO) {
     if (!deadlines || !deadlines.length) return null;
     var sorted = deadlines.slice().sort(function (a, b) {
       return a.dueISO < b.dueISO ? -1 : a.dueISO > b.dueISO ? 1 : 0;
     });
+    var next = null;
     for (var i = 0; i < sorted.length; i++) {
-      if (sorted[i].dueISO < todayISO) return sorted[i]; // la más vencida
+      if (sorted[i].dueISO < todayISO) next = sorted[i]; // la vencida más reciente hasta ahora
+      else break;
     }
-    return sorted[0]; // la próxima más cercana (o vence hoy)
+    return next || sorted[0]; // la vencida más reciente, o la próxima más cercana (o vence hoy)
   }
   // ¿Es `target` la fecha límite elegida como siguiente de la misma
   // lista? Se compara por tipo + fecha de vencimiento, el par que
