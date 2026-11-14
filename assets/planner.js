@@ -1,6 +1,6 @@
 /* IEP Year Planner — page logic. Runs entirely in the browser.
  * No network calls are made from this page: dates typed here never leave
- * the device. (The waitlist script is separate and is not loaded here.) */
+ * the device. Nothing you type here is uploaded or stored anywhere. */
 (function () {
   "use strict";
   var data = window.IEP_STATES;
@@ -76,7 +76,7 @@
         "</div></div>";
     });
     htmlOut += "<p class='small'>Planning aids from published rules — not legal advice. " +
-      "Your <a href='/states/" + s.slug + ".html'>" + s.name + " state page</a> shows the official source for each figure.</p>";
+      "Your <a href='states/" + s.slug + ".html'>" + s.name + " state page</a> shows the official source for each figure.</p>";
     box.innerHTML = htmlOut;
   });
 })();

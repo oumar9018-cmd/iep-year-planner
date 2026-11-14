@@ -1,5 +1,7 @@
 /* Anonymous test counters — no cookies, no personal data, no child data.
-   Counts only: page views, planner completions, offer views, offer clicks. */
+   Counts only: page views, planner completions, pricing views, pricing clicks.
+   v2: offer_view fires when the pricing section enters view; offer_click fires
+   on pricing / signup buttons. Event names kept from v1 for continuity. */
 (function () {
   "use strict";
   var ENDPOINT = "https://lyzghuyifnlfswtyjnmz.supabase.co/rest/v1/iep_events";
@@ -16,18 +18,26 @@
   }
   window.iepTrack = send;
   send("view", "");
-  document.querySelectorAll("form[data-waitlist]").forEach(function (form) {
-    var st = form.querySelector("input[name=state]");
-    var sv = st ? st.value : "";
+
+  function stateOf(el) {
+    var host = el && el.closest ? el.closest("[data-state]") : null;
+    return host ? host.getAttribute("data-state") : "";
+  }
+
+  var pricing = document.querySelector("#pricing");
+  if (pricing) {
     var seen = false;
     if ("IntersectionObserver" in window) {
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) {
-          if (en.isIntersecting && !seen) { seen = true; send("offer_view", sv); io.disconnect(); }
+          if (en.isIntersecting && !seen) { seen = true; send("offer_view", stateOf(pricing)); io.disconnect(); }
         });
-      }, { threshold: 0.4 });
-      io.observe(form);
+      }, { threshold: 0.25 });
+      io.observe(pricing);
     }
-    form.addEventListener("submit", function () { send("offer_click", sv); });
-  });
+    pricing.addEventListener("click", function (ev) {
+      var a = ev.target.closest ? ev.target.closest("a[href*='signup.html'], .plan-btn") : null;
+      if (a) send("offer_click", stateOf(pricing));
+    });
+  }
 })();

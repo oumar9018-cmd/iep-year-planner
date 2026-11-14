@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Plans — IEP Year Planner</title>
+<link rel="stylesheet" href="../assets/app.css?v=3">
+</head>
+<body data-page="plans">
+<header class="appbar">
+  <a class="brand" href="dashboard.html">IEP Year Planner</a>
+  <span class="appbar-user" data-user-email></span>
+</header>
+<nav class="appnav">
+  <a href="dashboard.html" data-nav="dashboard">Dashboard</a>
+  <a href="children.html" data-nav="children">Children</a>
+  <a href="documents.html" data-nav="documents">Documents</a>
+  <a href="notes.html" data-nav="notes">Notes</a>
+  <a href="plans.html" data-nav="plans">Plans</a>
+  <a href="settings.html" data-nav="settings">Settings</a>
+</nav>
+<main class="wrap">
+  <div id="app-msg" class="app-msg info" hidden></div>
+
+  <div class="page-head">
+    <h1>Plans</h1>
+    <p>Start free. Paid plans open soon — honestly, cards are not connected yet, so nobody can charge you anything today.</p>
+  </div>
+
+  <div class="pay-note" id="pay-note" hidden></div>
+
+  <div class="plan-grid">
+    <article class="card plan-card" data-plan-card="free">
+      <h3>Free</h3>
+      <div class="price">$0</div>
+      <div class="per">forever</div>
+      <ul>
+        <li>1 child</li>
+        <li>Automatic deadlines</li>
+        <li>5 documents</li>
+        <li>Meeting notes log</li>
+      </ul>
+      <button class="btn ghost block" type="button" disabled>Free plan</button>
+    </article>
+
+    <article class="card plan-card" data-plan-card="monthly">
+      <h3>Monthly</h3>
+      <div class="price">$5</div>
+      <div class="per">per month</div>
+      <ul>
+        <li>Up to 5 children</li>
+        <li>Automatic deadlines</li>
+        <li>200 documents</li>
+        <li>Meeting notes log</li>
+        <li>Deadline countdowns on your dashboard</li>
+      </ul>
+      <button class="btn block paid-btn" type="button" data-plan="monthly">Choose Monthly</button>
+    </article>
+
+    <article class="card plan-card" data-plan-card="yearly">
+      <h3>Yearly</h3>
+      <div class="price">$39</div>
+      <div class="per">per year — like getting two-plus months free vs monthly</div>
+      <ul>
+        <li>Up to 5 children</li>
+        <li>Automatic deadlines</li>
+        <li>200 documents</li>
+        <li>Meeting notes log</li>
+        <li>Deadline countdowns on your dashboard</li>
+      </ul>
+      <button class="btn block paid-btn" type="button" data-plan="yearly">Choose Yearly</button>
+    </article>
+  </div>
+
+  <section class="block">
+    <h2>Compare plans</h2>
+    <div class="panel" style="padding:6px 14px">
+      <table class="compare">
+        <tr><th></th><th>Free</th><th>Monthly $5</th><th>Yearly $39</th></tr>
+        <tr><td>Children tracked</td><td>1</td><td>5</td><td>5</td></tr>
+        <tr><td>Document storage</td><td>5 files</td><td>200 files</td><td>200 files</td></tr>
+        <tr><td>Automatic deadlines</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td>Meeting notes log</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td>Works on every device</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+      </table>
+    </div>
+    <p class="meta">Prices in US dollars. Paid plans are not on sale yet — card payments open soon, and your free plan keeps working in the meantime.</p>
+  </section>
+
+  <p class="app-foot">Planning aid from published rules — not legal advice.</p>
+</main>
+<script src="../assets/states-data.js"></script>
+<script src="../assets/planner-core.js"></script>
+<script src="../assets/auth.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

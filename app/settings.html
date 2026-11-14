@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Settings — IEP Year Planner</title>
+<link rel="stylesheet" href="../assets/app.css?v=3">
+</head>
+<body data-page="settings">
+<header class="appbar">
+  <a class="brand" href="dashboard.html">IEP Year Planner</a>
+  <span class="appbar-user" data-user-email></span>
+</header>
+<nav class="appnav">
+  <a href="dashboard.html" data-nav="dashboard">Dashboard</a>
+  <a href="children.html" data-nav="children">Children</a>
+  <a href="documents.html" data-nav="documents">Documents</a>
+  <a href="notes.html" data-nav="notes">Notes</a>
+  <a href="plans.html" data-nav="plans">Plans</a>
+  <a href="settings.html" data-nav="settings">Settings</a>
+</nav>
+<main class="wrap">
+  <div id="app-msg" class="app-msg info" hidden></div>
+
+  <div class="page-head">
+    <h1>Settings</h1>
+    <p>Your profile and account.</p>
+  </div>
+
+  <form class="panel" id="set-form">
+    <label>Your name
+      <input type="text" id="set-name" autocomplete="name">
+    </label>
+    <label>Your state
+      <select id="set-state"></select>
+      <span class="hint">Your home state — each child can still have their own state on the Children page.</span>
+    </label>
+    <button class="btn block" type="submit">Save settings</button>
+  </form>
+
+  <div class="panel">
+    <p class="meta">Signed in as</p>
+    <p><strong id="set-email">—</strong></p>
+    <p class="meta" style="margin-top:12px">Current plan</p>
+    <p id="set-plan">—</p>
+  </div>
+
+  <div class="panel">
+    <h3 style="font-size:16px;color:var(--navy);margin-bottom:6px">Your data</h3>
+    <p style="font-size:14.5px">Everything you save — children, documents, notes — is stored in your account, not on this device. Refresh the page or sign in on another phone or computer and it will all be there. Only your account can see your records.</p>
+    <button class="btn danger block signout-btn" type="button">Sign out</button>
+  </div>
+
+  <p class="app-foot">Planning aid from published rules — not legal advice.</p>
+</main>
+<script src="../assets/states-data.js"></script>
+<script src="../assets/planner-core.js"></script>
+<script src="../assets/auth.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

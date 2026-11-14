@@ -3,27 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IEP Year Planner — work out this year&#x27;s deadlines (free)</title>
-<meta name="description" content="Free in-browser planner: enter your IEP dates and see your annual review, reevaluation, evaluation and transition deadlines, using your state&#x27;s verified timeline.">
-<link rel="stylesheet" href="assets/style.css">
+<title>Free IEP Deadline Planner — Annual Review, Reevaluation &amp; Evaluation Dates</title>
+<meta name="description" content="Free in-browser IEP planner: enter your dates and see your annual review deadline, reevaluation date, evaluation timeline and transition milestone, using your state&#x27;s verified rules.">
+<link rel="canonical" href="https://oumar9018-cmd.github.io/iep-year-planner/planner.html">
+<meta property="og:title" content="Free IEP Deadline Planner — Annual Review, Reevaluation &amp; Evaluation Dates">
+<meta property="og:description" content="Free in-browser IEP planner: enter your dates and see your annual review deadline, reevaluation date, evaluation timeline and transition milestone, using your state&#x27;s verified rules.">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="assets/style.css?v=3">
 </head>
 <body>
 <header class="site"><div class="wrap">
-<a class="wordmark" href="index.html">IEP Year Planner</a>
-<nav><a href="planner.html">Free planner</a><a href="states/">State timelines</a><a href="index.html#offer">The organiser</a></nav>
+<a class="wordmark" href="index.html"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M8 15h3"/></svg></span>IEP Year Planner</a>
+<nav class="site-nav"><a href="planner.html">Free planner</a><a href="states/">State timelines</a><a href="index.html#pricing">Pricing</a><a href="login.html">Sign in</a><a class="nav-cta" href="signup.html">Start free</a></nav>
 </div></header>
+
 <main><div class="wrap">
 
-<h1>IEP Year Planner</h1>
-<p class="lede">Enter the dates you already have. The planner does the calendar work — including
-school-day timelines — and lists what is due this year.</p>
-<p class="small">Nothing you type here is sent anywhere. The maths runs in your browser, on this
-device. There is no account and nothing is stored.</p>
+<span class="eyebrow">The free planner</span>
+<h1 class="display" style="font-size:36px;margin:10px 0 12px">Work out this year's IEP deadlines</h1>
+<p class="lede" style="max-width:60ch">Enter the dates you already have. The planner does the calendar work — including school-day timelines — and lists what is due this year.</p>
+<p class="small" style="margin:10px 0 22px">Nothing you type here is sent anywhere. The math runs in your browser, on this device. There is no account and nothing is stored.</p>
 
+<div class="panel-card">
 <form id="planner-form">
 <fieldset>
 <legend>Your state</legend>
-<div class="field">
+<div class="field" style="margin-bottom:4px">
 <label for="p-state">State</label>
 <select id="p-state"></select>
 <p class="hint" id="p-state-note"></p>
@@ -31,7 +36,7 @@ device. There is no account and nothing is stored.</p>
 </fieldset>
 
 <fieldset>
-<legend>Dates you may have (fill in any you know)</legend>
+<legend>Dates you may have — fill in any you know</legend>
 <div class="field">
 <label for="p-start" id="p-start-label">Date you signed consent for an initial evaluation</label>
 <input type="date" id="p-start">
@@ -45,37 +50,102 @@ device. There is no account and nothing is stored.</p>
 <label for="p-eval">Date of the last evaluation or reevaluation</label>
 <input type="date" id="p-eval">
 </div>
-<div class="field">
-<label for="p-dob">Child's date of birth <span class="hint">(used only to work out the transition-planning milestone)</span></label>
+<div class="field" style="margin-bottom:4px">
+<label for="p-dob">Child's date of birth <span class="hint" style="display:inline">(only used for the transition-planning milestone)</span></label>
 <input type="date" id="p-dob">
 </div>
 </fieldset>
-<button type="submit" class="button">Work out my deadlines</button>
+<button type="submit" class="btn btn-primary btn-block">Work out my deadlines</button>
 </form>
-
 <div id="results" aria-live="polite"></div>
-
-<div class="panel">
-<h2>How the dates are worked out</h2>
-<ul>
-<li><strong>Annual review:</strong> 12 months after the last one — federal law requires a review at least once a year.</li>
-<li><strong>Reevaluation:</strong> 3 years after the last evaluation — the federal outside date, unless you and the school have agreed in writing that one is not needed.</li>
-<li><strong>Initial evaluation:</strong> your state's own timeline, taken from its published rules (the source is linked on your state's page). States that count <em>school days</em> are counted here Monday to Friday — <strong>an approximation</strong>: school holidays and breaks are not counted here, and your district's calendar decides the exact date.</li>
-<li><strong>Transition planning:</strong> it must be in the IEP that is in effect on the birthday shown — your state's age, or 16 where the state follows the federal rule.</li>
-</ul>
-<p class="small">These dates are planning aids based on published rules, not legal advice. If a date here
-disagrees with a notice from your school, the school's notice and your
-<a href="https://www.parentcenterhub.org/find-your-center/">Parent Center</a> are the place to check it.</p>
 </div>
+
+<div class="tile" style="margin-top:16px">
+<span class="eyebrow">How the dates are worked out</span>
+<h3>The rules behind the list</h3>
+<ul class="ticks">
+<li><b>Annual review:</b>&nbsp;12 months after the last one — federal law requires a review at least once a year.</li>
+<li><b>Reevaluation:</b>&nbsp;3 years after the last evaluation — the federal outside date, unless you and the school agreed in writing that one is not needed.</li>
+<li><b>Initial evaluation:</b>&nbsp;your state's own timeline, from its published rules (the source is named on your state's page). School-day states are counted Monday to Friday here — an approximation: holidays and breaks are not counted, and your district's calendar decides the exact date.</li>
+<li><b>Transition planning:</b>&nbsp;it must be in the IEP in effect on the birthday shown — your state's age, or 16 where the state follows the federal rule.</li>
+</ul>
+<p class="small" style="margin-top:12px">These dates are planning aids based on published rules, not legal advice. If a date here disagrees with a notice from your school, the school's notice and your <a href="https://www.parentcenterhub.org/find-your-center/" rel="noopener">Parent Center</a> are the place to check it.</p>
+</div>
+
+<section class="block" id="pricing">
+<h2 class="section-title">Simple pricing</h2>
+<p class="section-sub">Start free. The planner and your state's timelines stay free either way — paying only adds the countdown dashboard, the record, and room for up to 5 children.</p>
+<div class="pricing-grid">
+<div class="price-card">
+<div class="plan">Free</div>
+<div class="amount">$0</div>
+<p class="plan-note">For one child. No card, no account needed for the planner.</p>
+<ul class='ticks'>
+<li><b>1 child</b></li>
+<li>Your state's deadline list</li>
+<li>The free planner, any time</li>
+<li>Annual review &amp; reevaluation dates</li>
+</ul>
+<a class="btn btn-ghost btn-block plan-btn" href="signup.html">Start free</a>
+</div>
+<div class="price-card">
+<div class="plan">Monthly</div>
+<div class="amount">$5<span class="per"> / month</span></div>
+<p class="plan-note">The full organiser, month to month. Cancel anytime.</p>
+<ul class='ticks'>
+<li>Everything in Free</li>
+<li><b>Up to 5 children</b></li>
+<li>Every deadline counted down on your dashboard</li>
+<li>Meeting &amp; document record, in order</li>
+<li>Evaluation clocks tracked for you</li>
+</ul>
+<a class="btn btn-primary btn-block plan-btn" href="signup.html">Choose Monthly</a>
+</div>
+<div class="price-card featured">
+<span class="badge">Best value</span>
+<div class="plan">Yearly</div>
+<div class="amount">$39<span class="per"> / year</span></div>
+<p class="plan-note">The full organiser for a whole school year — $39 instead of $60 monthly. Save 35%.</p>
+<ul class='ticks'>
+<li>Everything in Monthly</li>
+<li><b>One payment</b> for the whole school year</li>
+<li>Your price stays $39 for the year</li>
+<li>The same dashboard and records — paid once</li>
+</ul>
+<a class="btn btn-blue btn-block plan-btn" href="signup.html">Choose Yearly</a>
+</div>
+</div>
+<p class="small pricing-fine">Prices in USD. You are only ever charged at a checkout you complete yourself — no card is taken to start free. This is an organiser for dates and paperwork, not legal advice; free advice is available from your <a href="https://www.parentcenterhub.org/find-your-center/" rel="noopener">Parent Center</a>.</p>
+</section>
+
 <script src="assets/planner-core.js"></script>
 <script src="assets/states-data.js"></script>
 <script src="assets/planner.js"></script>
-
 </div></main>
 <footer class="site"><div class="wrap">
-<p>Timelines shown here are general information taken from published federal and state rules — not legal advice, and not a substitute for the notices your school district sends you. Your state&#x27;s Parent Center can confirm the dates that apply to your child.</p>
-<p>Free help: <a href="https://www.parentcenterhub.org/find-your-center/">Find your state's Parent Training and Information Center</a> (federally funded, free to parents).</p>
-<p class="small">Every timeline figure on this site is taken from the official source linked on the page where it appears. Last data check: November 2026.</p>
+<div class="foot-grid">
+<div class="foot-brand">
+<a class="wordmark" href="index.html"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M8 15h3"/></svg></span>IEP Year Planner</a>
+<p>Deadlines, countdowns and one tidy record for your child's IEP year — built from your state's real rules, with the source named for every figure.</p>
+</div>
+<div class="foot-col">
+<h5>Explore</h5>
+<a href="planner.html">Free IEP planner</a>
+<a href="index.html#pricing">Pricing</a>
+<a href="signup.html">Create an account</a>
+<a href="login.html">Sign in</a>
+</div>
+<div class="foot-col">
+<h5>Free help</h5>
+<p>Advice about your child's case is free from trained people: every state has a federally funded Parent Training and Information Center (PTI).</p>
+<p style="margin-top:8px"><a href="https://www.parentcenterhub.org/find-your-center/" rel="noopener">Find your state's Parent Center</a></p>
+</div>
+</div>
+<div class="foot-small">
+<p>Timelines on this site are general information taken from published federal and state rules — not legal advice, and not a substitute for the notices your school district sends you. Your state's Parent Center can confirm the dates that apply to your child.</p>
+<p>Every figure is taken from the official source named on the page where it appears. Last data check: November 2026.</p>
+<p><a href="states/">Browse all 50 state timelines</a> · © 2026 IEP Year Planner</p>
+</div>
 </div></footer>
 <script src="assets/track.js" defer></script>
 </body>

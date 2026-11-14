@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Children — IEP Year Planner</title>
+<link rel="stylesheet" href="../assets/app.css?v=3">
+</head>
+<body data-page="children">
+<header class="appbar">
+  <a class="brand" href="dashboard.html">IEP Year Planner</a>
+  <span class="appbar-user" data-user-email></span>
+</header>
+<nav class="appnav">
+  <a href="dashboard.html" data-nav="dashboard">Dashboard</a>
+  <a href="children.html" data-nav="children">Children</a>
+  <a href="documents.html" data-nav="documents">Documents</a>
+  <a href="notes.html" data-nav="notes">Notes</a>
+  <a href="plans.html" data-nav="plans">Plans</a>
+  <a href="settings.html" data-nav="settings">Settings</a>
+</nav>
+<main class="wrap">
+  <div id="app-msg" class="app-msg info" hidden></div>
+
+  <div class="page-head">
+    <h1>Children</h1>
+    <p>Add a child and their key dates — every deadline is worked out from those dates automatically, and stays saved in your account.</p>
+  </div>
+
+  <div class="limit-note" id="limit-note"></div>
+
+  <form class="panel" id="child-form">
+    <input type="hidden" id="c-id">
+    <label>Child's first name or nickname
+      <input type="text" id="c-name" autocomplete="off" required>
+    </label>
+    <p class="hint">Privacy first: we store only what deadlines need — a name you choose, a birth date, your state, and three school dates. Never a school name, a diagnosis, or anything else about your child.</p>
+    <label>Date of birth
+      <input type="date" id="c-dob">
+      <span class="hint">Used only to work out the transition-planning date.</span>
+    </label>
+    <label>State
+      <select id="c-state" class="state-select"></select>
+    </label>
+    <label>Evaluation clock start date
+      <input type="date" id="c-eval">
+      <span class="hint">The date you signed consent for an evaluation — or, in CT, NC and VA, the date the school received the referral. Leave blank if no evaluation is pending.</span>
+    </label>
+    <label>Last annual IEP review
+      <input type="date" id="c-annual">
+    </label>
+    <label>Last full evaluation
+      <input type="date" id="c-eval3">
+      <span class="hint">Used for the 3-year reevaluation deadline.</span>
+    </label>
+    <button class="btn block" type="submit" id="child-submit">Add child</button>
+    <button class="btn ghost block" type="button" id="child-cancel" hidden>Cancel editing</button>
+  </form>
+
+  <section class="block">
+    <h2>Your children</h2>
+    <div id="children-list"></div>
+  </section>
+
+  <p class="app-foot">Planning aid from published rules — not legal advice.</p>
+</main>
+<script src="../assets/states-data.js"></script>
+<script src="../assets/planner-core.js"></script>
+<script src="../assets/auth.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

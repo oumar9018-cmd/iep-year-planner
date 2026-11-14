@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Documents — IEP Year Planner</title>
+<link rel="stylesheet" href="../assets/app.css?v=3">
+</head>
+<body data-page="documents">
+<header class="appbar">
+  <a class="brand" href="dashboard.html">IEP Year Planner</a>
+  <span class="appbar-user" data-user-email></span>
+</header>
+<nav class="appnav">
+  <a href="dashboard.html" data-nav="dashboard">Dashboard</a>
+  <a href="children.html" data-nav="children">Children</a>
+  <a href="documents.html" data-nav="documents">Documents</a>
+  <a href="notes.html" data-nav="notes">Notes</a>
+  <a href="plans.html" data-nav="plans">Plans</a>
+  <a href="settings.html" data-nav="settings">Settings</a>
+</nav>
+<main class="wrap">
+  <div id="app-msg" class="app-msg info" hidden></div>
+
+  <div class="page-head">
+    <h1>Documents</h1>
+    <p>IEPs, evaluations, letters — one private place for the whole paper trail.</p>
+  </div>
+
+  <form class="panel" id="doc-form">
+    <label>File
+      <input type="file" id="doc-file" required>
+      <span class="hint">Private storage: only you can open your files, through short-lived signed links that expire. Maximum 10 MB per file.</span>
+    </label>
+    <label>Title
+      <input type="text" id="doc-title" placeholder="Optional — the file name is used if left blank">
+    </label>
+    <label>Child
+      <select id="doc-child"></select>
+    </label>
+    <button class="btn block" type="submit" id="doc-submit">Upload document</button>
+  </form>
+
+  <p class="meta" id="doc-count" style="margin-bottom:14px"></p>
+
+  <section class="block">
+    <h2>Your documents</h2>
+    <div id="doc-list"></div>
+  </section>
+
+  <p class="app-foot">Files live in your account's private folder — nobody else's account can open them.</p>
+</main>
+<script src="../assets/states-data.js"></script>
+<script src="../assets/planner-core.js"></script>
+<script src="../assets/auth.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

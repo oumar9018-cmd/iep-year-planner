@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Notes — IEP Year Planner</title>
+<link rel="stylesheet" href="../assets/app.css?v=3">
+</head>
+<body data-page="notes">
+<header class="appbar">
+  <a class="brand" href="dashboard.html">IEP Year Planner</a>
+  <span class="appbar-user" data-user-email></span>
+</header>
+<nav class="appnav">
+  <a href="dashboard.html" data-nav="dashboard">Dashboard</a>
+  <a href="children.html" data-nav="children">Children</a>
+  <a href="documents.html" data-nav="documents">Documents</a>
+  <a href="notes.html" data-nav="notes">Notes</a>
+  <a href="plans.html" data-nav="plans">Plans</a>
+  <a href="settings.html" data-nav="settings">Settings</a>
+</nav>
+<main class="wrap">
+  <div id="app-msg" class="app-msg info" hidden></div>
+
+  <div class="page-head">
+    <h1>Meeting notes</h1>
+    <p>A simple log of meetings, calls and school emails — what was agreed, and what happens next.</p>
+  </div>
+
+  <form class="panel" id="note-form">
+    <label>Date
+      <input type="date" id="n-date" required>
+    </label>
+    <label>Title
+      <input type="text" id="n-title" placeholder="Annual review meeting" required>
+    </label>
+    <label>Child
+      <select id="n-child"></select>
+    </label>
+    <label>Notes
+      <textarea id="n-notes" placeholder="What was agreed, who was there, what happens next…"></textarea>
+    </label>
+    <button class="btn block" type="submit">Save entry</button>
+  </form>
+
+  <section class="block">
+    <h2>Your log</h2>
+    <div id="note-list"></div>
+  </section>
+
+  <p class="app-foot">Your log is stored in your account and stays the same on every device.</p>
+</main>
+<script src="../assets/states-data.js"></script>
+<script src="../assets/planner-core.js"></script>
+<script src="../assets/auth.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>
