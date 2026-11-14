@@ -72,22 +72,86 @@
   //         dayTypeLabel: string,
   //         dual: {school_days, calendar_days}|null,
   //         clockStart: "consent"|"referral"|"dual",
+  //         referralDays: number|null — for clockStart "dual" states (MD):
+  //           the second clock, this many calendar days from the written referral.
+  //         absenceExtension: boolean — TX-style rule: days absent during the
+  //           evaluation extend the timeline by the days absent.
   //         status: "verified"|"partial"|"unverified" }
   // transition: number (age in years, may be fractional) or {months, label}
-  // inputs: { startDate, lastAnnualReview, lastEvaluation, childDob } — ISO strings or ""
-  //   startDate = the date the state's clock starts (consent date in most
-  //   states; the date the school received the referral in CT/NC/VA).
+  // inputs: { startDate, referralDate, absentDays, lastAnnualReview,
+  //           lastEvaluation, childDob } — ISO strings or ""; absentDays a number.
+  //   startDate = the date you signed consent. referralDate = the date the
+  //   school received the referral (the clock start in CT/NC/VA; the second
+  //   clock in MD). In referral states the referral date drives the math when
+  //   given; a consent-only estimate is labelled as likely too late, because
+  //   the real clock started earlier, at referral.
   // Returns: [{kind, title, dueISO, dueText, basis, approx:boolean}]
   function computeDeadlines(rule, transition, inputs) {
     var out = [];
-    var startPhrase = (rule && rule.clockStart === "referral")
-      ? "from the date the school received the referral"
-      : "from the date you signed consent";
+    inputs = inputs || {};
+    var absent = parseInt(inputs.absentDays, 10);
+    if (!(absent > 0)) absent = 0;
 
-    if (inputs.startDate) {
-      if (rule && rule.dayKind === "dual" && rule.dual) {
-        var dSchool = addSchoolDays(inputs.startDate, rule.dual.school_days);
-        var dCal = addCalendarDays(inputs.startDate, rule.dual.calendar_days);
+    // Which date starts the evaluation clock?
+    var evalStart = "", startNote = "";
+    var startPhrase = "from the date you signed consent";
+    if (rule && rule.clockStart === "referral") {
+      if (inputs.referralDate) {
+        evalStart = inputs.referralDate;
+        startPhrase = "from the date the school received the referral";
+      } else if (inputs.startDate) {
+        evalStart = inputs.startDate;
+        startNote = " Caution: your state's clock legally starts on the date the school receives the referral — which is earlier than consent — so the real deadline is likely sooner than this estimate. Enter the referral date for the exact figure.";
+      }
+    } else if (inputs.startDate) {
+      evalStart = inputs.startDate;
+    }
+
+    if (evalStart || (rule && rule.clockStart === "dual" && rule.referralDays && inputs.referralDate)) {
+      if (rule && rule.clockStart === "dual" && rule.referralDays) {
+        // Two clocks (Maryland): value days from consent AND referralDays
+        // calendar days from the written referral — the earlier date applies.
+        var dConsent = inputs.startDate
+          ? ((rule.dayKind === "calendar") ? addCalendarDays(inputs.startDate, rule.value)
+                                           : addSchoolDays(inputs.startDate, rule.value))
+          : null;
+        var dRef = inputs.referralDate ? addCalendarDays(inputs.referralDate, rule.referralDays) : null;
+        if (dConsent && dRef) {
+          var dFirst = dConsent < dRef ? dConsent : dRef;
+          out.push({
+            kind: "evaluation",
+            title: "Initial evaluation deadline",
+            dueISO: dFirst,
+            dueText: pretty(dFirst),
+            basis: "Your state runs two clocks: " + rule.value + " " + rule.dayTypeLabel +
+              " from parental consent (" + pretty(dConsent) + ") and " + rule.referralDays +
+              " calendar days from the written referral (" + pretty(dRef) +
+              ") — the earlier date applies.",
+            approx: rule.dayKind !== "calendar"
+          });
+        } else if (dConsent) {
+          out.push({
+            kind: "evaluation",
+            title: "Initial evaluation deadline",
+            dueISO: dConsent,
+            dueText: pretty(dConsent),
+            basis: rule.value + " " + rule.dayTypeLabel + " from parental consent (your state's timeline). Your state also runs a second clock — " +
+              rule.referralDays + " calendar days from the written referral — enter the referral date to check whether it gives an earlier date.",
+            approx: rule.dayKind !== "calendar"
+          });
+        } else {
+          out.push({
+            kind: "evaluation",
+            title: "Initial evaluation deadline",
+            dueISO: dRef,
+            dueText: pretty(dRef),
+            basis: rule.referralDays + " calendar days from the date the school received the written referral (your state's timeline). Your state also runs a clock from parental consent — enter the consent date too, to see both.",
+            approx: false
+          });
+        }
+      } else if (rule && rule.dayKind === "dual" && rule.dual) {
+        var dSchool = addSchoolDays(evalStart, rule.dual.school_days);
+        var dCal = addCalendarDays(evalStart, rule.dual.calendar_days);
         var dDual = dSchool < dCal ? dSchool : dCal;
         out.push({
           kind: "evaluation",
@@ -96,17 +160,22 @@
           dueText: pretty(dDual),
           basis: "Your state sets two limits — " + rule.dual.school_days + " school days (" +
             pretty(dSchool) + ") or " + rule.dual.calendar_days + " calendar days (" +
-            pretty(dCal) + ") — and the earlier date applies. Counted " + startPhrase + ".",
+            pretty(dCal) + ") — and the earlier date applies. Counted " + startPhrase + "." + startNote,
           approx: true
         });
       } else if (rule && rule.value != null && rule.dayKind) {
-        var due = (rule.dayKind === "calendar")
-          ? addCalendarDays(inputs.startDate, rule.value)
-          : addSchoolDays(inputs.startDate, rule.value);
-        var basisTxt = rule.value + " " + rule.dayTypeLabel + " " + startPhrase + " (your state's timeline).";
-        if (rule.clockStart === "dual") {
-          basisTxt += " Your state also runs a second clock from the written referral — check your state's page.";
+        var effValue = rule.value;
+        var absenceNote = "";
+        if (rule.absenceExtension && absent > 0 && rule.dayKind !== "calendar") {
+          effValue = rule.value + absent;
+          absenceNote = " This estimate includes " + absent + " extra school day" + (absent === 1 ? "" : "s") +
+            " because your child was absent " + absent + " day" + (absent === 1 ? "" : "s") +
+            " during the evaluation — Texas extends the timeline by the number of days absent once absences reach 3 (19 TAC §89.1011).";
         }
+        var due = (rule.dayKind === "calendar")
+          ? addCalendarDays(evalStart, effValue)
+          : addSchoolDays(evalStart, effValue);
+        var basisTxt = rule.value + " " + rule.dayTypeLabel + " " + startPhrase + " (your state's timeline)." + absenceNote + startNote;
         out.push({
           kind: "evaluation",
           title: "Initial evaluation deadline",
@@ -119,8 +188,8 @@
         out.push({
           kind: "evaluation",
           title: "Initial evaluation deadline (federal baseline)",
-          dueISO: addCalendarDays(inputs.startDate, 60),
-          dueText: pretty(addCalendarDays(inputs.startDate, 60)),
+          dueISO: addCalendarDays(evalStart, 60),
+          dueText: pretty(addCalendarDays(evalStart, 60)),
           basis: "60 calendar days from consent — the federal IDEA baseline (34 CFR 300.301). We could not verify your state's own timeline from an official source; check your state's page and your Parent Center.",
           approx: false
         });

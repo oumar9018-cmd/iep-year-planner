@@ -45,7 +45,15 @@
     </label>
     <label>Evaluation clock start date
       <input type="date" id="c-eval">
-      <span class="hint">The date you signed consent for an evaluation — or, in CT, NC and VA, the date the school received the referral. Leave blank if no evaluation is pending.</span>
+      <span class="hint">The date you signed consent for an evaluation. Leave blank if no evaluation is pending.</span>
+    </label>
+    <label id="c-referral-row" hidden>Referral date
+      <input type="date" id="c-referral">
+      <span class="hint" id="c-referral-hint">In your state, the evaluation clock starts on the date the school receives the referral.</span>
+    </label>
+    <label id="c-absent-row" hidden>Days absent during the evaluation (Texas)
+      <input type="number" id="c-absent" min="0" max="45" step="1" inputmode="numeric">
+      <span class="hint">Texas rule: if your child was absent 3 or more days while the evaluation was running, the deadline extends by the number of days absent.</span>
     </label>
     <label>Last annual IEP review
       <input type="date" id="c-annual">

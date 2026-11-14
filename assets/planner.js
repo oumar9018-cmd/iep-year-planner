@@ -7,8 +7,10 @@
   var core = window.PlannerCore;
   var sel = document.getElementById("p-state");
   var note = document.getElementById("p-state-note");
-  var startLabel = document.getElementById("p-start-label");
   var startHint = document.getElementById("p-start-hint");
+  var refRow = document.getElementById("p-referral-row");
+  var refHint = document.getElementById("p-referral-hint");
+  var absRow = document.getElementById("p-absent-row");
 
   var abbrs = Object.keys(data).sort(function (a, b) {
     return data[a].name < data[b].name ? -1 : 1;
@@ -34,12 +36,17 @@
     note.textContent = s.name + ": initial evaluation " + s.value + " " + s.dayTypeLabel + ". " + clockTxt +
       (s.status !== "verified"
         ? " We are still double-checking one detail of this state's figures — see the state page."
-        : "");
+        : "") +
+      (s.verifiedOn ? " Rules last verified: " + core.pretty(s.verifiedOn) + "." : "");
+    if (refRow) refRow.hidden = !s.needsReferral;
+    if (absRow) absRow.hidden = !s.absenceExtension;
     if (s.clockStart === "referral") {
-      startLabel.textContent = "Date the school received the referral (this starts your state's clock)";
-      startHint.textContent = "Your state counts its timeline from the referral, not from consent.";
+      if (refHint) refHint.textContent = "This date starts your state's clock — it matters more than the consent date here.";
+      startHint.textContent = "If you only know the consent date, enter it and the planner will estimate from it — but the real clock started at referral, so the real deadline is likely sooner.";
+    } else if (s.clockStart === "dual") {
+      if (refHint) refHint.textContent = "Your state also runs a clock from the written referral (" + (s.referralDays || 90) + " days) — enter it to see the earlier of the two dates.";
+      startHint.textContent = "Leave blank if your child already has an IEP and no new evaluation is pending.";
     } else {
-      startLabel.textContent = "Date you signed consent for an initial evaluation";
       startHint.textContent = "Leave blank if your child already has an IEP and no new evaluation is pending.";
     }
   }
@@ -51,10 +58,16 @@
     var s = data[sel.value];
     var rule = {
       value: s.value, dayKind: s.dayKind, dayTypeLabel: s.dayTypeLabel,
-      dual: s.dual, clockStart: s.clockStart, status: s.status
+      dual: s.dual, clockStart: s.clockStart, status: s.status,
+      referralDays: s.referralDays || null,
+      absenceExtension: !!s.absenceExtension
     };
+    var refEl = document.getElementById("p-referral");
+    var absEl = document.getElementById("p-absent");
     var inputs = {
       startDate: document.getElementById("p-start").value,
+      referralDate: (s.needsReferral && refEl) ? refEl.value : "",
+      absentDays: (s.absenceExtension && absEl) ? absEl.value : "",
       lastAnnualReview: document.getElementById("p-annual").value,
       lastEvaluation: document.getElementById("p-eval").value,
       childDob: document.getElementById("p-dob").value
@@ -75,8 +88,10 @@
         (d.approx ? " Counted Monday to Friday, without holidays or school breaks — your district's calendar decides the exact date." : "") +
         "</div></div>";
     });
-    htmlOut += "<p class='small'>Planning aids from published rules — not legal advice. " +
-      "Your <a href='states/" + s.slug + ".html'>" + s.name + " state page</a> shows the official source for each figure.</p>";
+    htmlOut += "<p class='small'>Planning aids from published rules — estimated timelines, not legal advice. " +
+      "Your <a href='states/" + s.slug + ".html'>" + s.name + " state page</a> shows the official source for each figure." +
+      (s.verifiedOn ? " The " + s.name + " figures were last verified against that source on " + core.pretty(s.verifiedOn) + "." : "") +
+      "</p>";
     box.innerHTML = htmlOut;
   });
 })();

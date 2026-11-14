@@ -160,20 +160,24 @@
     if (!core) return [];
     var s = (window.IEP_STATES || {})[child.state] || null;
     var rule = s
-      ? { value: s.value, dayKind: s.dayKind, dayTypeLabel: s.dayTypeLabel, dual: s.dual, clockStart: s.clockStart, status: s.status }
+      ? { value: s.value, dayKind: s.dayKind, dayTypeLabel: s.dayTypeLabel, dual: s.dual, clockStart: s.clockStart, status: s.status,
+          referralDays: s.referralDays || null, absenceExtension: !!s.absenceExtension }
       : { value: null, dayKind: null, dayTypeLabel: "", dual: null, clockStart: "consent", status: "unverified" };
     var transition = s ? { months: s.transitionMonths, label: s.transitionLabel } : null;
     var inputs = {
       startDate: child.eval_date || "",
+      referralDate: child.referral_date || "",
+      absentDays: child.absent_days || 0,
       lastAnnualReview: child.last_annual_review || "",
       lastEvaluation: child.last_evaluation || "",
       childDob: child.dob || ""
     };
+    var verifiedOn = (s && s.verifiedOn) ? core.pretty(s.verifiedOn) : "";
     return core.computeDeadlines(rule, transition, inputs).map(function (d) {
       return {
         childId: child.id, childName: child.name,
         kind: d.kind, title: d.title, dueISO: d.dueISO, dueText: d.dueText,
-        basis: d.basis, approx: d.approx,
+        basis: d.basis, approx: d.approx, verifiedOn: verifiedOn,
         daysLeft: daysBetween(todayISO(), d.dueISO)
       };
     });
@@ -266,6 +270,7 @@
           return '<div class="deadline-row"><div class="deadline-main"><strong>' + esc(d.title) + '</strong>' +
             '<span class="meta"> · ' + esc(d.childName) + '</span><div class="meta">' + esc(d.dueText) +
             (d.approx ? ' <span title="Counted Monday–Friday without holidays or school breaks">(approx.)</span>' : '') +
+            (d.verifiedOn ? ' · Rules last verified ' + esc(d.verifiedOn) : '') +
             '</div></div>' + deadlineBadge(d) + '</div>';
         }).join("");
       }
@@ -293,6 +298,22 @@
     var listEl = $("#children-list");
     var note = $("#limit-note");
     var childrenCache = [];
+
+    // Referral-date field appears only for states whose evaluation clock
+    // needs it (CT/NC/VA referral clocks, MD's second clock); the absence
+    // field only for Texas (19 TAC §89.1011). Driven by states-data flags.
+    function syncConditionalFields() {
+      var s = (window.IEP_STATES || {})[$("#c-state").value] || null;
+      var refRow = $("#c-referral-row"), absRow = $("#c-absent-row"), refHint = $("#c-referral-hint");
+      if (refRow) refRow.hidden = !(s && s.needsReferral);
+      if (absRow) absRow.hidden = !(s && s.absenceExtension);
+      if (refHint && s) {
+        refHint.textContent = s.clockStart === "dual"
+          ? "Your state runs two clocks — this referral date drives the second one (90 days). The earlier of the two dates applies."
+          : "In your state, the evaluation clock starts on the date the school receives the referral — not the consent date.";
+      }
+    }
+    $("#c-state").addEventListener("change", syncConditionalFields);
 
     function render() {
       var lim = limits();
@@ -327,6 +348,9 @@
           $("#c-name").value = c.name || "";
           $("#c-dob").value = c.dob || "";
           fillStateSelect($("#c-state"), c.state || "");
+          syncConditionalFields();
+          $("#c-referral").value = c.referral_date || "";
+          $("#c-absent").value = (c.absent_days != null ? c.absent_days : "");
           $("#c-eval").value = c.eval_date || "";
           $("#c-annual").value = c.last_annual_review || "";
           $("#c-eval3").value = c.last_evaluation || "";
@@ -357,6 +381,7 @@
       $("#c-id").value = "";
       $("#child-submit").textContent = "Add child";
       $("#child-cancel").hidden = true;
+      syncConditionalFields();
       render();
     });
     form.addEventListener("submit", function (ev) {
@@ -371,13 +396,25 @@
         last_annual_review: $("#c-annual").value || null,
         last_evaluation: $("#c-eval3").value || null
       };
+      // New columns (see supabase/iep-accuracy-round1.sql — must be applied
+      // before this ships): only sent for states that use them, so saves for
+      // every other state keep working even before the migration runs.
+      var sRow = (window.IEP_STATES || {})[row.state] || null;
+      if (sRow && sRow.needsReferral) row.referral_date = $("#c-referral").value || null;
+      if (sRow && sRow.absenceExtension) {
+        var av = parseInt($("#c-absent").value, 10);
+        row.absent_days = (av > 0) ? av : null;
+      }
       if (!row.name) { showMsg("Please enter your child's name.", "error"); return; }
       if (!id && childrenCache.length >= limits().children) {
         showMsg("Your " + limits().label + " plan covers " + limits().children + " child(ren). See Plans to track more.", "error");
         return;
       }
+      var patch = { name: row.name, dob: row.dob, state: row.state, eval_date: row.eval_date, last_annual_review: row.last_annual_review, last_evaluation: row.last_evaluation };
+      if ("referral_date" in row) patch.referral_date = row.referral_date;
+      if ("absent_days" in row) patch.absent_days = row.absent_days;
       var op = id
-        ? apiPatch("children", "id=eq." + id, { name: row.name, dob: row.dob, state: row.state, eval_date: row.eval_date, last_annual_review: row.last_annual_review, last_evaluation: row.last_evaluation })
+        ? apiPatch("children", "id=eq." + id, patch)
         : apiInsert("children", row);
       op.then(function () {
         showMsg(id ? "Changes saved." : "Child added.");
@@ -385,9 +422,11 @@
         $("#c-id").value = "";
         $("#child-submit").textContent = "Add child";
         $("#child-cancel").hidden = true;
+        syncConditionalFields();
         refresh();
       }).catch(function (err) { showMsg(err.message, "error"); });
     });
+    syncConditionalFields();
     refresh();
   }
 
