@@ -282,6 +282,13 @@ legend{font-weight:800;color:var(--navy);font-size:15px;padding:0 8px}
 .deadline>div:first-child{font-weight:700;color:var(--navy);font-size:16px}
 .deadline .when{font-size:19px;font-weight:800;color:var(--blue-dark);margin:3px 0}
 .deadline .basis{font-size:13.5px;color:var(--mut);line-height:1.55}
+.wn-toggle{margin-top:11px}
+.wn-panel{margin-top:12px;border-top:1px solid var(--line-soft);padding-top:12px}
+.wn-panel .wn-head{font-weight:700;color:var(--navy);font-size:14.5px;margin:12px 0 4px}
+.wn-panel .wn-head:first-of-type{margin-top:2px}
+.wn-steps{margin:6px 0 10px 20px;font-size:13.5px;color:var(--ink-soft);line-height:1.6}
+.wn-steps li{margin-bottom:5px}
+.wn-panel .small{margin-top:6px}
 
 /* ---------- auth ---------- */
 .auth-wrap{max-width:460px;margin:26px auto 10px}

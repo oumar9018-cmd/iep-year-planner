@@ -80,18 +80,48 @@
       return;
     }
     if (window.iepTrack) window.iepTrack("planner_complete", sel.value);
+    // "What happens next" — the full guide on the public planner (this
+    // is the free trust surface; plan gating lives only in the app).
+    // Content comes from the shared module (assets/what-next.js).
+    var WN = window.IEPWhatNext;
+    function whatNextHtml(d) {
+      if (!WN) return "";
+      var b = WN.blockFor(d.kind);
+      if (!b) return "";
+      var steps = b.steps.map(function (s) { return "<li>" + s + "</li>"; }).join("");
+      return "<button type='button' class='btn btn-ghost btn-sm wn-toggle' aria-expanded='false'>What happens next</button>" +
+        "<div class='wn-panel' hidden>" +
+        "<p class='basis'>" + b.meaning + "</p>" +
+        "<p class='wn-head'>If this date passes</p>" +
+        "<p class='basis'>" + b.ifPasses + "</p>" +
+        "<p class='wn-head'>Steps you can take</p>" +
+        "<ol class='wn-steps'>" + steps + "</ol>" +
+        "<p class='small'>" + b.cite + "</p>" +
+        "<p class='small'>" + WN.DISCLAIMER + "</p>" +
+        "</div>";
+    }
     var htmlOut = "<h2>Your deadlines</h2>";
     list.forEach(function (d) {
       htmlOut += "<div class='deadline'><div>" + d.title + "</div>" +
         "<div class='when'>" + d.dueText + "</div>" +
         "<div class='basis'>" + d.basis +
         (d.approx ? " Counted Monday to Friday, without holidays or school breaks — your district's calendar decides the exact date." : "") +
-        "</div></div>";
+        "</div>" + whatNextHtml(d) + "</div>";
     });
     htmlOut += "<p class='small'>Planning aids from published rules — estimated timelines, not legal advice. " +
       "Your <a href='states/" + s.slug + ".html'>" + s.name + " state page</a> shows the official source for each figure." +
       (s.verifiedOn ? " The " + s.name + " figures were last verified against that source on " + core.pretty(s.verifiedOn) + "." : "") +
       "</p>";
     box.innerHTML = htmlOut;
+    Array.prototype.forEach.call(box.querySelectorAll(".wn-toggle"), function (btn) {
+      btn.addEventListener("click", function () {
+        var panel = btn.nextElementSibling;
+        if (!panel) return;
+        var open = panel.hidden;
+        panel.hidden = !open;
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        btn.textContent = open ? "Hide" : "What happens next";
+      });
+    });
   });
 })();

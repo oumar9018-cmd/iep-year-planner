@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculadora gratuita de fechas límite del IEP: revisión anual, reevaluación y fechas de evaluación</title>
+<meta name="description" content="Calculadora gratuita del IEP en su navegador: ingrese sus fechas y vea la fecha límite de la revisión anual, la fecha de reevaluación, el plazo de evaluación y el hito de transición, con las reglas verificadas de su estado.">
+<link rel="canonical" href="https://oumar9018-cmd.github.io/iep-year-planner/es/planner.html">
+<link rel="alternate" hreflang="en" href="https://oumar9018-cmd.github.io/iep-year-planner/planner.html">
+<link rel="alternate" hreflang="es" href="https://oumar9018-cmd.github.io/iep-year-planner/es/planner.html">
+<link rel="alternate" hreflang="x-default" href="https://oumar9018-cmd.github.io/iep-year-planner/planner.html">
+<meta property="og:title" content="Calculadora gratuita de fechas límite del IEP: revisión anual, reevaluación y fechas de evaluación">
+<meta property="og:description" content="Calculadora gratuita del IEP en su navegador: ingrese sus fechas y vea la fecha límite de la revisión anual, la fecha de reevaluación, el plazo de evaluación y el hito de transición, con las reglas verificadas de su estado.">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="../assets/style.css?v=3">
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="wordmark" href="index.html"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M8 15h3"/></svg></span>IEP Year Planner</a>
+<nav class="site-nav"><a href="planner.html">Calculadora gratuita</a><a href="states/">Plazos por estado</a><a href="index.html#pricing">Precios</a><a href="../login.html">Iniciar sesión</a><a href="../planner.html">English</a><a class="nav-cta" href="../signup.html">Empezar gratis</a></nav>
+</div></header>
+
+<main><div class="wrap">
+
+<span class="eyebrow">La calculadora gratuita</span>
+<h1 class="display" style="font-size:36px;margin:10px 0 12px">Calcule las fechas límite del IEP de este año</h1>
+<p class="lede" style="max-width:60ch">Ingrese las fechas que ya tiene. La calculadora hace el trabajo del calendario — incluidos los plazos de días escolares — y enumera lo que vence este año.</p>
+<p class="small" style="margin:10px 0 22px">Nada de lo que escribe aquí se envía a ningún lado. Las cuentas se hacen en su navegador, en este dispositivo. No se guarda nada.</p>
+
+<div class="panel-card">
+<form id="planner-form">
+<fieldset>
+<legend>Su estado</legend>
+<div class="field" style="margin-bottom:4px">
+<label for="p-state">Estado</label>
+<select id="p-state"></select>
+<p class="hint" id="p-state-note"></p>
+</div>
+</fieldset>
+
+<fieldset>
+<legend>Fechas que puede tener: llene las que conozca</legend>
+<div class="field">
+<label for="p-start" id="p-start-label">Fecha en que firmó el consentimiento para una evaluación inicial</label>
+<input type="date" id="p-start">
+<p class="hint" id="p-start-hint">Déjelo en blanco si su hijo o hija ya tiene un IEP y no hay una evaluación nueva pendiente.</p>
+</div>
+<div class="field" id="p-referral-row" hidden>
+<label for="p-referral">Fecha en que la escuela recibió la remisión</label>
+<input type="date" id="p-referral">
+<p class="hint" id="p-referral-hint"></p>
+</div>
+<div class="field" id="p-absent-row" hidden>
+<label for="p-absent">Días de ausencia durante la evaluación <span class="hint" style="display:inline">(Texas)</span></label>
+<input type="number" id="p-absent" min="0" max="45" step="1" inputmode="numeric">
+<p class="hint">Regla de Texas: si su hijo o hija se ausentó 3 o más días mientras la evaluación estaba en curso, la fecha límite se extiende por el número de días de ausencia.</p>
+</div>
+<div class="field">
+<label for="p-annual">Fecha de la última revisión anual del IEP</label>
+<input type="date" id="p-annual">
+</div>
+<div class="field">
+<label for="p-eval">Fecha de la última evaluación o reevaluación</label>
+<input type="date" id="p-eval">
+</div>
+<div class="field" style="margin-bottom:4px">
+<label for="p-dob">Fecha de nacimiento de su hijo o hija <span class="hint" style="display:inline">(solo se usa para el hito de la planificación de la transición)</span></label>
+<input type="date" id="p-dob">
+</div>
+</fieldset>
+<button type="submit" class="btn btn-primary btn-block">Calcular mis fechas límite</button>
+</form>
+<div id="results" aria-live="polite"></div>
+</div>
+
+<div class="tile" style="margin-top:16px">
+<span class="eyebrow">Cómo se calculan las fechas</span>
+<h3>Las reglas detrás de la lista</h3>
+<ul class="ticks">
+<li><b>Revisión anual:</b>&nbsp;12 meses después de la última: la ley federal exige una revisión al menos una vez al año.</li>
+<li><b>Reevaluación:</b>&nbsp;3 años después de la última evaluación: la fecha máxima federal, a menos que usted y la escuela hayan acordado por escrito que no hace falta.</li>
+<li><b>Evaluación inicial:</b>&nbsp;el plazo propio de su estado, de sus reglas publicadas (la fuente se nombra en la página de su estado). Los estados de días escolares se cuentan aquí de lunes a viernes: es una aproximación, porque los días festivos y los recesos no se cuentan, y el calendario de su distrito escolar decide la fecha exacta.</li>
+<li><b>Planificación de la transición:</b>&nbsp;debe estar en el IEP vigente en el cumpleaños indicado: la edad de su estado, o 16 donde el estado sigue la regla federal.</li>
+</ul>
+<p class="small" style="margin-top:12px">Estas fechas son ayudas de planificación basadas en reglas publicadas, no asesoría legal. Si una fecha aquí no coincide con un aviso de su escuela, el aviso de la escuela y su <a href="https://www.parentcenterhub.org/find-your-center/" rel="noopener">Centro de Padres</a> son el lugar para verificarla.</p>
+</div>
+
+<section class="block" id="pricing">
+<h2 class="section-title">Precios sencillos</h2>
+<p class="section-sub">Empiece gratis. La calculadora y los plazos de su estado se quedan gratis de cualquier manera: pagar solo agrega el tablero con cuenta regresiva, el registro y espacio para hasta 5 niños.</p>
+<div class="pricing-grid">
+<div class="price-card">
+<div class="plan">Gratis</div>
+<div class="amount">$0</div>
+<p class="plan-note">Para un niño. No se necesita tarjeta: gratis para siempre.</p>
+<ul class='ticks'>
+<li><b>1 niño</b></li>
+<li>La lista de fechas límite de su estado</li>
+<li>La calculadora gratuita, cuando quiera</li>
+<li>Fechas de revisión anual y reevaluación</li>
+</ul>
+<a class="btn btn-ghost btn-block plan-btn" href="../signup.html">Empezar gratis</a>
+</div>
+<div class="price-card">
+<div class="plan">Mensual</div>
+<div class="amount">$5<span class="per"> / mes</span></div>
+<p class="plan-note">El organizador completo, mes a mes. Cancele cuando quiera.</p>
+<ul class='ticks'>
+<li>Todo lo del plan Gratis</li>
+<li><b>Hasta 5 niños</b></li>
+<li>Cada fecha límite con cuenta regresiva en su tablero</li>
+<li>Registro de reuniones y documentos, en orden</li>
+<li>Seguimiento automático de los relojes de evaluación</li>
+</ul>
+<a class="btn btn-primary btn-block plan-btn" href="../signup.html">Elegir Mensual</a>
+</div>
+<div class="price-card featured">
+<span class="badge">Mejor valor</span>
+<div class="plan">Anual</div>
+<div class="amount">$39<span class="per"> / año</span></div>
+<p class="plan-note">El organizador completo para todo un año escolar: $39 en lugar de $60 mensuales. Ahorre 35%.</p>
+<ul class='ticks'>
+<li>Todo lo del plan Mensual</li>
+<li><b>Un solo pago</b> para todo el año escolar</li>
+<li>Su precio se mantiene en $39 por el año</li>
+<li>El mismo tablero y los mismos registros, pagado una vez</li>
+</ul>
+<a class="btn btn-blue btn-block plan-btn" href="../signup.html">Elegir Anual</a>
+</div>
+</div>
+<p class="small pricing-fine">Precios en USD. Solo se le cobra en un pago que usted mismo complete: no se pide ninguna tarjeta para empezar gratis. Esto es un organizador de fechas y papeleo, no asesoría legal; el consejo gratuito está disponible en su <a href="https://www.parentcenterhub.org/find-your-center/" rel="noopener">Centro de Padres</a>.</p>
+<p class="small pricing-fine">Nota honesta: el tablero y el área de la cuenta están en inglés por ahora. Todo lo de esta página — y la calculadora — funciona por completo en español.</p>
+</section>
+
+<script src="../assets/planner-core.js?v=5"></script>
+<script src="../assets/what-next-es.js?v=5"></script>
+<script src="../assets/states-data.js?v=5"></script>
+<script src="../assets/planner-es.js?v=5"></script>
+</div></main>
+<footer class="site"><div class="wrap">
+<div class="foot-grid">
+<div class="foot-brand">
+<a class="wordmark" href="index.html"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M8 15h3"/></svg></span>IEP Year Planner</a>
+<p>Fechas límite, cuentas regresivas y un solo registro ordenado para el año del IEP de su hijo o hija, a partir de las reglas reales de su estado, con la fuente nombrada de cada cifra.</p>
+</div>
+<div class="foot-col">
+<h5>Explorar</h5>
+<a href="planner.html">Calculadora gratuita del IEP</a>
+<a href="index.html#pricing">Precios</a>
+<a href="../signup.html">Crear una cuenta</a>
+<a href="../login.html">Iniciar sesión</a>
+</div>
+<div class="foot-col">
+<h5>Ayuda gratuita</h5>
+<p>El consejo sobre el caso de su hijo o hija es gratuito, de personas capacitadas: cada estado tiene un Centro de Capacitación e Información para Padres (PTI) financiado por el gobierno federal.</p>
+<p style="margin-top:8px"><a href="https://www.parentcenterhub.org/find-your-center/" rel="noopener">Encuentre el Centro de Padres de su estado</a></p>
+</div>
+</div>
+<div class="foot-small">
+<p>Los plazos de este sitio son información general tomada de las reglas federales y estatales publicadas: no es asesoría legal ni sustituye los avisos que le envía su distrito escolar. El Centro de Padres de su estado puede confirmar las fechas que aplican a su hijo o hija.</p>
+<p>Cada cifra viene de la fuente oficial nombrada en la página donde aparece. Última revisión de los datos: noviembre de 2026.</p>
+<p><a href="states/">Ver los plazos de los 50 estados</a> · © 2026 IEP Year Planner · <a href="../planner.html">English</a></p>
+</div>
+</div></footer>
+<script src="../assets/track.js?v=5" defer></script>
+</body>
+</html>

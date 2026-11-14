@@ -6,6 +6,17 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Dashboard — IEP Year Planner</title>
 <link rel="stylesheet" href="../assets/app.css?v=4">
+<style>
+  /* "What happens next" — page-local rules (app.css is the design
+   * team's file and is not touched). Toggle/panel markup is built by
+   * assets/app.js from the shared assets/what-next.js content. */
+  .wn { margin-top: 10px; }
+  .wn-panel { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
+  .wn-head { font-weight: 700; color: var(--navy); font-size: 14px; margin: 10px 0 3px; }
+  .wn-steps { margin: 4px 0 8px 20px; font-size: 14px; color: var(--ink-2); line-height: 1.55; }
+  .wn-steps li { margin-bottom: 4px; }
+  .wn-cite { margin-top: 8px; }
+</style>
 </head>
 <body data-page="dashboard">
 <header class="appbar">
@@ -53,9 +64,10 @@
 
   <p class="app-foot">Your records are stored in your account — refresh this page, or sign in on any device, and everything is still here.</p>
 </main>
-<script src="../assets/states-data.js"></script>
-<script src="../assets/planner-core.js"></script>
-<script src="../assets/auth.js"></script>
-<script src="../assets/app.js"></script>
+<script src="../assets/states-data.js?v=5"></script>
+<script src="../assets/planner-core.js?v=5"></script>
+<script src="../assets/what-next.js?v=5"></script>
+<script src="../assets/auth.js?v=5"></script>
+<script src="../assets/app.js?v=5"></script>
 </body>
 </html>

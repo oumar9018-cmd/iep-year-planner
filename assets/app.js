@@ -195,6 +195,59 @@
     return '<span class="badge ok">In ' + d.daysLeft + ' days</span>';
   }
 
+  // ---------- "What happens next" guides --------------------------------
+  // Content + next-deadline logic live in the shared module
+  // (assets/what-next.js, canonical in tools/what-next.js). Styles for
+  // the .wn-* classes are page-local (dashboard.html / children.html) —
+  // app.css is not touched. Plan gating (the founder's doctrine): on
+  // Free, the guide is FULL only for the child's next deadline (the
+  // module's pickNextDeadline — a past-due deadline counts as next);
+  // every other deadline shows the meaning + first step, with the
+  // remaining steps behind a calm plans note. Paid shows all in full.
+  function whatNextFull(childDeadlines, d) {
+    if (planKey() !== "free") return true;
+    var WN = window.IEPWhatNext;
+    return WN ? WN.isNextDeadline(childDeadlines, d, todayISO()) : false;
+  }
+  function whatNextHtml(d, full) {
+    var WN = window.IEPWhatNext;
+    if (!WN) return "";
+    var b = WN.blockFor(d.kind);
+    if (!b) return "";
+    var inner = '<p class="meta">' + esc(b.meaning) + "</p>";
+    if (full) {
+      inner += '<p class="wn-head">If this date passes</p>' +
+        '<p class="meta">' + esc(b.ifPasses) + "</p>" +
+        '<p class="wn-head">Steps you can take</p>' +
+        '<ol class="wn-steps">' +
+        b.steps.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") +
+        "</ol>";
+    } else {
+      inner += '<p class="wn-head">First step you can take</p>' +
+        '<p class="meta">' + esc(b.steps[0]) + "</p>" +
+        '<div class="limit-note">The full step-by-step guide for every deadline is part of paid plans — ' +
+        "your " + limits().label + " plan shows it in full for the next deadline only. " +
+        '<a href="plans.html">See plans</a></div>';
+    }
+    inner += '<p class="meta wn-cite">' + esc(b.cite) + "</p>" +
+      '<p class="meta">' + esc(WN.DISCLAIMER) + "</p>";
+    return '<div class="wn"><button class="btn small wn-toggle" type="button" aria-expanded="false">What happens next</button>' +
+      '<div class="wn-panel" hidden>' + inner + "</div></div>";
+  }
+  function wireWhatNext(root) {
+    $all(".wn-toggle", root || document).forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var wrap = btn.parentElement;
+        var panel = wrap ? wrap.querySelector(".wn-panel") : null;
+        if (!panel) return;
+        var open = panel.hidden;
+        panel.hidden = !open;
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        btn.textContent = open ? "Hide" : "What happens next";
+      });
+    });
+  }
+
   // ---------- service-minutes math (pure — unit-tested via IEPApp) ------
   // Weeks run Monday–Sunday. A month's promised minutes are the weekly
   // promise prorated by the days in that month (perWeek × days ÷ 7) —
@@ -397,10 +450,13 @@
           return '<article class="card child-card"><h3>' + esc(c.name) + '</h3>' +
             '<p class="meta">' + esc(stateName || "State not set") + '</p>' +
             (next
-              ? '<p class="next">Next: <strong>' + esc(next.title) + '</strong> — ' + esc(next.dueText) + '</p>' + deadlineBadge(next)
+              ? '<p class="next">Next: <strong>' + esc(next.title) + '</strong> — ' + esc(next.dueText) + '</p>' + deadlineBadge(next) +
+                // The card's deadline IS the child's next — full guide on every plan.
+                whatNextHtml(next, true)
               : '<p class="meta">Add dates on the Children page to see deadlines.</p>') +
             '</article>';
         }).join("");
+        wireWhatNext(cbox);
       }
 
       var deadlines = allDeadlines(children);
@@ -408,13 +464,18 @@
       if (!deadlines.length) {
         dbox.innerHTML = '<p class="meta">No deadlines yet. Add a child with their key dates and deadlines will appear here automatically.</p>';
       } else {
+        // Per-child lists for the what-next gating (which of this
+        // child's deadlines is their next one).
+        var dlByChild = {};
+        children.forEach(function (c) { dlByChild[c.id] = deadlinesForChild(c); });
         dbox.innerHTML = deadlines.slice(0, 6).map(function (d) {
           return '<div class="deadline-row"><div class="deadline-main"><strong>' + esc(d.title) + '</strong>' +
             '<div class="meta">' + esc(d.childName) + ' · ' + esc(d.dueText) +
             (d.approx ? ' <span title="Counted Monday–Friday without holidays or school breaks">(approx.)</span>' : '') +
             (d.verifiedOn ? ' · Rules last verified ' + esc(d.verifiedOn) : '') +
-            '</div></div>' + deadlineBadge(d) + '</div>';
+            '</div>' + whatNextHtml(d, whatNextFull(dlByChild[d.childId] || [], d)) + '</div>' + deadlineBadge(d) + '</div>';
         }).join("");
+        wireWhatNext(dbox);
       }
 
       var today = todayISO();
@@ -503,7 +564,9 @@
         return '<article class="card child-card"><h3>' + esc(c.name) + '</h3>' +
           '<p class="meta">' + esc(stateName || "State not set") +
           (c.dob ? ' · Born ' + esc(window.PlannerCore.pretty(c.dob)) : '') + '</p>' +
-          (next ? '<p class="next">Next: <strong>' + esc(next.title) + '</strong> — ' + esc(next.dueText) + '</p>' + deadlineBadge(next) : '') +
+          (next ? '<p class="next">Next: <strong>' + esc(next.title) + '</strong> — ' + esc(next.dueText) + '</p>' + deadlineBadge(next) +
+            // The card's deadline IS the child's next — full guide on every plan.
+            whatNextHtml(next, true) : '') +
           '<div class="card-actions"><button class="btn small" data-edit="' + c.id + '">Edit</button>' +
           '<button class="btn small danger" data-del="' + c.id + '">Delete</button></div></article>';
       }).join("");
@@ -538,6 +601,7 @@
           }).catch(function (err) { showMsg(err.message, "error"); });
         });
       });
+      wireWhatNext(listEl);
     }
     function refresh() {
       loadChildren().then(function (rows) { childrenCache = rows || []; render(); })
@@ -1014,11 +1078,15 @@
         html += '<p class="meta">No deadlines yet — add this child\u2019s key dates on the Children page and they will appear here automatically.</p>';
       } else {
         html += pack.deadlines.map(function (d) {
+          // Compact what-next line (first step only) — part of the
+          // printed pack, from the shared module.
+          var wnStep = window.IEPWhatNext ? window.IEPWhatNext.firstStep(d.kind) : "";
           return '<div class="deadline-row"><div class="deadline-main"><strong>' + esc(d.title) + '</strong>' +
             '<div class="meta">' + esc(d.dueText) +
             (d.approx ? ' <span title="Counted Monday\u2013Friday without holidays or school breaks">(approx.)</span>' : '') +
             '<br>' + esc(d.basis) +
             (d.verifiedOn ? ' Rules last verified ' + esc(d.verifiedOn) + '.' : '') +
+            (wnStep ? '<br>Next step: ' + esc(wnStep) : '') +
             '</div></div>' + deadlineBadge(d) + '</div>';
         }).join("");
       }
