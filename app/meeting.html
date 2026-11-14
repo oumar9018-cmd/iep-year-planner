@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Meeting prep — IEP Year Planner</title>
+<link rel="stylesheet" href="../assets/app.css?v=4">
+<style>
+  /* Meeting prep — page-local rules only. The print block is the point
+   * of this page: the pack must reach paper (or a phone PDF) as one
+   * clean black-on-white document, so app chrome, forms, buttons and
+   * plan notes never print. App-wide print rules deliberately do NOT
+   * live in app.css (design team's file); they live here. */
+  .pack-head { margin-bottom: 20px; }
+  .pack-head h2 { font-size: 26px; font-weight: 800; color: var(--navy); letter-spacing: -.02em; }
+  .pq-label { flex: 1; min-width: 0; display: flex; gap: 9px; align-items: flex-start; cursor: pointer; }
+  .pq-label input[type="checkbox"] { flex: none; width: 19px; height: 19px; margin-top: 1px; accent-color: var(--blue); }
+  .pq-glyph { display: none; }
+  .pq-done .pq-text { text-decoration: line-through; }
+
+  @media print {
+    .appbar, .appnav, .app-msg, .page-head, .app-foot, .no-print { display: none !important; }
+    body { background: #fff !important; }
+    .wrap { max-width: none !important; margin: 0 !important; padding: 0 !important; }
+    #pack, #pack .card, #pack .deadline-row, #pack .doc-row {
+      background: #fff !important; box-shadow: none !important;
+    }
+    #pack * { color: #000 !important; }
+    #pack .card, #pack .deadline-row, #pack .doc-row { border: 1px solid #999 !important; }
+    #pack .deadline-row::before { background: #999 !important; }
+    #pack .badge { background: #fff !important; border: 1px solid #666 !important; box-shadow: none !important; }
+    #pack section.block > h2::before { background: #000 !important; }
+    #pack a { color: #000 !important; text-decoration: none !important; }
+    #pack section.block, #pack .card, #pack .deadline-row, #pack .doc-row { break-inside: avoid; }
+    #pack input[type="checkbox"] { display: none !important; }
+    .pq-glyph { display: inline !important; }
+    @page { margin: 14mm; }
+  }
+</style>
+</head>
+<body data-page="meeting">
+<header class="appbar">
+  <a class="brand" href="dashboard.html">IEP Year Planner</a>
+  <span class="appbar-user" data-user-email></span>
+</header>
+<nav class="appnav">
+  <a href="dashboard.html" data-nav="dashboard">Dashboard</a>
+  <a href="children.html" data-nav="children">Children</a>
+  <a href="documents.html" data-nav="documents">Documents</a>
+  <a href="notes.html" data-nav="notes">Notes</a>
+  <a href="services.html" data-nav="services">Services</a>
+  <a href="meeting.html" data-nav="meeting">Meeting prep</a>
+  <a href="plans.html" data-nav="plans">Plans</a>
+  <a href="settings.html" data-nav="settings">Settings</a>
+</nav>
+<main class="wrap">
+  <div id="app-msg" class="app-msg info" hidden></div>
+
+  <div class="page-head">
+    <h1>Meeting prep</h1>
+    <p>One clean pack for the meeting: your child's deadlines, the services promised and delivered, documents, recent notes, and the questions you want to ask. Print it, or save it as a PDF from your phone.</p>
+  </div>
+
+  <div class="panel no-print" id="mp-controls">
+    <label>Child
+      <select id="mp-child"></select>
+    </label>
+    <button class="btn block" type="button" id="mp-print">Print this pack</button>
+    <p class="hint">Printing shows only the pack below — no menus, no forms, nothing extra.</p>
+  </div>
+
+  <div id="pack"></div>
+
+  <p class="app-foot">The pack is built from your own saved records each time you open this page — add a date, a log entry or a question anywhere in the app and it is here.</p>
+</main>
+<script src="../assets/states-data.js"></script>
+<script src="../assets/planner-core.js"></script>
+<script src="../assets/auth.js"></script>
+<script src="../assets/app.js"></script>
+</body>
+</html>

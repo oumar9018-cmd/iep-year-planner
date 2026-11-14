@@ -263,6 +263,71 @@
     return { promised: promised, delivered: wk.delivered, missed: wk.missed, gap: Math.max(0, promised - wk.delivered) };
   }
 
+  // ---------- meeting-prep pack assembly (pure — unit-tested via IEPApp) --
+  // The US school year starts September 1: before September, the school
+  // year that is running began last September.
+  function schoolYearStartISO(iso) {
+    var y = +iso.slice(0, 4), m = +iso.slice(5, 7);
+    return (m >= 9 ? y : y - 1) + "-09-01";
+  }
+  // School-year-to-date totals for one service, on the same proration
+  // convention as the monthly figure (perWeek × days ÷ 7, rounded) —
+  // here the days from September 1 through today, inclusive.
+  function serviceYearSummary(service, logs, today) {
+    var perWeek = service.minutes_per_week || 0;
+    var start = schoolYearStartISO(today);
+    var days = daysBetween(start, today) + 1;
+    var promised = Math.round(perWeek * days / 7);
+    var t = sumLogsIn(logs, start, today);
+    return {
+      start: start, end: today, days: days,
+      promised: promised, delivered: t.delivered, missed: t.missed,
+      gap: Math.max(0, promised - t.delivered)
+    };
+  }
+  // Assemble one child's meeting-prep pack from already-loaded account
+  // rows. Pure: no DOM, no network.
+  // data: { documents, meetings, services, logs, questions } — the full
+  // account lists; this filters to the child. Documents, notes and
+  // services not linked to any child are included (a parent may not
+  // have linked them, and the pack is where everything for the meeting
+  // must show up); rows linked to a DIFFERENT child never appear.
+  // Questions belong to one child only, so they filter strictly.
+  // Plan scope follows the services history rule (serviceHistory):
+  // free → each service carries week + current-month figures (year:
+  // null) and notes are the latest 3; paid → a school-year summary is
+  // added per service and the notes history is complete.
+  function buildMeetingPack(child, data, today, plan) {
+    var lim = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+    var full = lim.serviceHistory === "all";
+    data = data || {};
+    function own(rows) {
+      return (rows || []).filter(function (r) { return !r.child_id || r.child_id === child.id; });
+    }
+    var services = own(data.services).map(function (s) {
+      var logs = (data.logs || []).filter(function (l) { return l.service_id === s.id; });
+      return {
+        id: s.id, name: s.name, minutesPerWeek: s.minutes_per_week || 0,
+        summary: serviceSummary(s, logs, today, monthKeyOf(today)),
+        year: full ? serviceYearSummary(s, logs, today) : null
+      };
+    });
+    var notesAll = own(data.meetings);
+    var stateName = (window.IEP_STATES && window.IEP_STATES[child.state])
+      ? window.IEP_STATES[child.state].name : (child.state || "");
+    return {
+      childId: child.id, childName: child.name,
+      state: child.state || "", stateName: stateName,
+      generatedOn: today, fullScope: full,
+      deadlines: deadlinesForChild(child),
+      services: services,
+      documents: own(data.documents),
+      notes: full ? notesAll : notesAll.slice(0, 3),
+      notesTotal: notesAll.length,
+      questions: (data.questions || []).filter(function (q) { return q.child_id === child.id; })
+    };
+  }
+
   // ---------- shell ---------------------------------------------------------
   function fillStateSelect(sel, value) {
     if (!sel) return;
@@ -306,6 +371,9 @@
   }
   function loadServiceLogs() {
     return apiGet("service_logs", "user_id=eq." + session.user.id + "&select=*&order=date.desc,created_at.desc");
+  }
+  function loadPrepQuestions() {
+    return apiGet("prep_questions", "user_id=eq." + session.user.id + "&select=*&order=created_at.asc");
   }
 
   // ==========================================================================
@@ -906,6 +974,217 @@
   }
 
   // ==========================================================================
+  // PAGE: meeting (meeting-prep pack)
+  // ==========================================================================
+  function initMeeting() {
+    var packEl = $("#pack");
+    var controlsEl = $("#mp-controls");
+    var childrenCache = [], docsCache = [], meetingsCache = [],
+        servicesCache = [], logsCache = [], questionsCache = [];
+    var questionsOk = true;
+    var selectedId = "";
+
+    function prettyDate(iso) { return window.PlannerCore ? window.PlannerCore.pretty(iso) : iso; }
+    function currentChild() {
+      return childrenCache.filter(function (c) { return c.id === selectedId; })[0] || childrenCache[0] || null;
+    }
+    function gapText(gap) { return gap > 0 ? gap + " min not yet logged" : "promised minutes covered"; }
+    function missedText(n) { return n ? " · " + n + (n === 1 ? " session" : " sessions") + " marked missed" : ""; }
+
+    function renderPack() {
+      var child = currentChild();
+      if (!child) {
+        packEl.innerHTML = '<div class="empty"><p>No children added yet.</p>' +
+          '<a class="btn" href="children.html">Add your child</a></div>';
+        return;
+      }
+      selectedId = child.id;
+      var pack = buildMeetingPack(child, {
+        documents: docsCache, meetings: meetingsCache, services: servicesCache,
+        logs: logsCache, questions: questionsCache
+      }, todayISO(), planKey());
+
+      var html = '<div class="pack-head"><h2>' + esc(pack.childName) + '</h2>' +
+        '<p class="meta">' + esc(pack.stateName || "State not set") + ' · Meeting prep pack · Prepared ' +
+        esc(prettyDate(pack.generatedOn)) + '</p></div>';
+
+      // ---- key deadlines (the engine's own rows, unmodified) ----
+      html += '<section class="block"><h2>Key deadlines</h2>';
+      if (!pack.deadlines.length) {
+        html += '<p class="meta">No deadlines yet — add this child\u2019s key dates on the Children page and they will appear here automatically.</p>';
+      } else {
+        html += pack.deadlines.map(function (d) {
+          return '<div class="deadline-row"><div class="deadline-main"><strong>' + esc(d.title) + '</strong>' +
+            '<div class="meta">' + esc(d.dueText) +
+            (d.approx ? ' <span title="Counted Monday\u2013Friday without holidays or school breaks">(approx.)</span>' : '') +
+            '<br>' + esc(d.basis) +
+            (d.verifiedOn ? ' Rules last verified ' + esc(d.verifiedOn) + '.' : '') +
+            '</div></div>' + deadlineBadge(d) + '</div>';
+        }).join("");
+      }
+      html += '</section>';
+
+      // ---- services: promised vs delivered ----
+      html += '<section class="block"><h2>Services — promised vs delivered</h2>';
+      if (!pack.services.length) {
+        html += '<p class="meta">No services tracked yet — add them on the Services page and the promised-vs-delivered figures will appear here.</p>';
+      } else {
+        html += pack.services.map(function (s) {
+          var w = s.summary.week, m = s.summary.month;
+          return '<article class="card"><h3>' + esc(s.name) + '</h3>' +
+            '<p class="meta">Promised ' + s.minutesPerWeek + ' min/week</p>' +
+            '<p class="meta">This week (Mon\u2013Sun): logged <strong>' + w.delivered + ' min</strong> of ' + w.promised +
+            ' min · ' + gapText(w.gap) + missedText(w.missed) + '</p>' +
+            '<p class="meta">' + esc(m.label) + ': logged <strong>' + m.delivered + ' min</strong> of about ' + m.promised +
+            ' min · ' + gapText(m.gap) + missedText(m.missed) + '</p>' +
+            (s.year ? '<p class="meta">School year (from ' + esc(prettyDate(s.year.start)) + '): logged <strong>' +
+              s.year.delivered + ' min</strong> of about ' + s.year.promised + ' min · ' + gapText(s.year.gap) +
+              missedText(s.year.missed) + '</p>' : '') +
+            '</article>';
+        }).join("");
+        if (!pack.fullScope) {
+          html += '<div class="limit-note no-print">School-year service totals (from September 1) are part of paid plans — ' +
+            'this pack shows this week and this month. <a href="plans.html">See plans</a></div>';
+        }
+      }
+      html += '</section>';
+
+      // ---- documents on file ----
+      html += '<section class="block"><h2>Documents on file</h2>';
+      if (!pack.documents.length) {
+        html += '<p class="meta">No documents on file yet.</p>';
+      } else {
+        html += pack.documents.map(function (d) {
+          return '<div class="doc-row"><div class="doc-main"><strong>' + esc(d.title) + '</strong>' +
+            '<div class="meta">' + esc(prettyDate((d.created_at || "").slice(0, 10))) + '</div></div></div>';
+        }).join("");
+      }
+      html += '</section>';
+
+      // ---- recent notes ----
+      html += '<section class="block"><h2>Recent notes</h2>';
+      if (!pack.notes.length) {
+        html += '<p class="meta">No notes logged yet.</p>';
+      } else {
+        html += pack.notes.map(function (n) {
+          return '<article class="card note-card"><div class="deadline-row"><div class="deadline-main">' +
+            '<strong>' + esc(n.title) + '</strong><div class="meta">' + esc(prettyDate(n.date)) +
+            '</div></div></div>' +
+            (n.notes ? '<p class="note-body">' + esc(n.notes) + '</p>' : '') + '</article>';
+        }).join("");
+        if (!pack.fullScope && pack.notesTotal > pack.notes.length) {
+          var hiddenCount = pack.notesTotal - pack.notes.length;
+          html += '<p class="meta no-print">+ ' + hiddenCount + ' earlier ' + (hiddenCount === 1 ? 'entry' : 'entries') +
+            ' saved — your ' + limits().label + ' plan\u2019s pack shows the latest 3. ' +
+            '<a href="plans.html">See plans</a> for the full history in the pack.</p>';
+        }
+      }
+      html += '</section>';
+
+      // ---- questions I want to ask ----
+      html += '<section class="block"><h2>Questions I want to ask</h2>';
+      if (!questionsOk) {
+        html += '<p class="meta no-print">Your saved questions could not be loaded just now — the rest of the pack is complete.</p>';
+      } else if (!pack.questions.length) {
+        html += '<p class="meta">No questions yet — add the things you want to raise at the meeting.</p>';
+      } else {
+        html += pack.questions.map(function (q) {
+          return '<div class="doc-row' + (q.done ? ' pq-done' : '') + '">' +
+            '<label class="pq-label"><input type="checkbox" data-q-toggle="' + q.id + '"' + (q.done ? ' checked' : '') + '>' +
+            '<span class="pq-glyph" aria-hidden="true">' + (q.done ? '\u2611' : '\u2610') + '</span>' +
+            '<span class="pq-text">' + esc(q.text) + '</span></label>' +
+            '<div class="card-actions"><button class="btn small danger no-print" type="button" data-q-del="' + q.id + '">Delete</button></div></div>';
+        }).join("");
+      }
+      if (questionsOk) {
+        html += '<form class="no-print" id="mp-qform"><label>Your question ' +
+          '<input type="text" id="mp-qtext" maxlength="300" placeholder="What would you like to ask at the meeting?" autocomplete="off"></label>' +
+          '<button class="btn small" type="submit">Add question</button></form>';
+      }
+      html += '</section>';
+
+      html += '<p class="meta">Deadlines are estimates worked out from your state\u2019s published rules and the dates you saved — a planning aid, not legal advice. Service figures reflect only what you have logged.</p>';
+
+      packEl.innerHTML = html;
+      wirePack();
+    }
+
+    function wirePack() {
+      var qform = $("#mp-qform");
+      if (qform) {
+        qform.addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          var text = $("#mp-qtext").value.trim();
+          if (!text) { showMsg("Type the question first.", "error"); return; }
+          var child = currentChild();
+          if (!child) return;
+          apiInsert("prep_questions", {
+            user_id: session.user.id, child_id: child.id, text: text, done: false
+          }).then(function () { showMsg("Question added."); refresh(); })
+            .catch(function (err) { showMsg(err.message, "error"); });
+        });
+      }
+      $all("[data-q-toggle]", packEl).forEach(function (box) {
+        box.addEventListener("change", function () {
+          var id = box.getAttribute("data-q-toggle");
+          var q = questionsCache.filter(function (x) { return x.id === id; })[0];
+          var done = box.checked;
+          apiPatch("prep_questions", "id=eq." + id, { done: done }).then(function () {
+            if (q) q.done = done;
+            var row = box.closest(".doc-row");
+            if (row) {
+              row.classList.toggle("pq-done", done);
+              var glyph = row.querySelector(".pq-glyph");
+              if (glyph) glyph.textContent = done ? "\u2611" : "\u2610";
+            }
+          }).catch(function (err) { box.checked = !done; showMsg(err.message, "error"); });
+        });
+      });
+      $all("[data-q-del]", packEl).forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          if (!window.confirm("Delete this question?")) return;
+          apiDelete("prep_questions", "id=eq." + btn.getAttribute("data-q-del"))
+            .then(function () { showMsg("Question deleted."); refresh(); })
+            .catch(function (err) { showMsg(err.message, "error"); });
+        });
+      });
+    }
+
+    function refresh() {
+      // The questions load rides on its own chain: until iep-prep.sql is
+      // applied the table does not exist, and that must not break the
+      // rest of the pack (same pattern as the dashboard services strip).
+      var qLoad = loadPrepQuestions().then(function (qs) {
+        questionsCache = qs || []; questionsOk = true;
+      }, function () {
+        questionsCache = []; questionsOk = false;
+      });
+      Promise.all([loadChildren(), loadDocuments(), loadMeetings(), loadServices(), loadServiceLogs(), qLoad])
+        .then(function (res) {
+          childrenCache = res[0] || [];
+          docsCache = res[1] || [];
+          meetingsCache = res[2] || [];
+          servicesCache = res[3] || [];
+          logsCache = res[4] || [];
+          var keep = selectedId;
+          fillChildSelect($("#mp-child"), childrenCache, false);
+          selectedId = (keep && childrenCache.some(function (c) { return c.id === keep; }))
+            ? keep : (childrenCache.length ? childrenCache[0].id : "");
+          if (selectedId) $("#mp-child").value = selectedId;
+          if (controlsEl) controlsEl.hidden = !childrenCache.length;
+          renderPack();
+        }).catch(function (err) { showMsg(err.message, "error"); });
+    }
+
+    $("#mp-child").addEventListener("change", function () {
+      selectedId = this.value;
+      renderPack();
+    });
+    $("#mp-print").addEventListener("click", function () { window.print(); });
+    refresh();
+  }
+
+  // ==========================================================================
   // PAGE: settings
   // ==========================================================================
   function initSettings() {
@@ -967,7 +1246,7 @@
       .then(function () {
         initShell(page);
         ({ dashboard: initDashboard, children: initChildren, documents: initDocuments,
-           notes: initNotes, services: initServices, settings: initSettings, plans: initPlans })[page]();
+           notes: initNotes, services: initServices, meeting: initMeeting, settings: initSettings, plans: initPlans })[page]();
       })
       .catch(function (err) {
         if (err && err.message !== "not-signed-in") showMsg(err.message || "Something went wrong loading your account.", "error");
@@ -979,6 +1258,9 @@
     deadlinesForChild: deadlinesForChild,
     serviceSummary: serviceSummary,
     servicesWeekTotals: servicesWeekTotals,
+    schoolYearStartISO: schoolYearStartISO,
+    serviceYearSummary: serviceYearSummary,
+    buildMeetingPack: buildMeetingPack,
     weekStartISO: weekStartISO,
     monthRange: monthRange,
     getProfile: function () { return profile; },
