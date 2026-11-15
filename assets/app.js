@@ -1280,6 +1280,34 @@
   // ==========================================================================
   // PAGE: plans
   // ==========================================================================
+  // Payments ride on the provider's HOSTED payment links (assets/
+  // pay-config.js). While IEP_PAY.enabled is false — or a plan has no
+  // link — the buttons keep the honest behaviour: no checkout opens,
+  // nothing is charged or recorded, the note simply says payments open
+  // soon. When enabled with a link, the button becomes "Subscribe" and
+  // opens the provider's page with the signed-in user's id attached so
+  // the payment webhook can activate the right account:
+  //   Stripe:   ?client_reference_id=<uid>  (Stripe's own parameter)
+  //   PayPal:   ?uid=<uid>  (the link must carry it into the webhook's
+  //             custom id — see supabase/functions/payment-webhook/)
+  //   Razorpay: ?uid=<uid>  (the payment link's notes.uid carries it)
+  // Google Pay / Apple Pay / cards live on that hosted page; this site
+  // never collects card details itself.
+  var PAY_PROVIDER_ORDER = ["stripe", "paypal", "razorpay"];
+  function payLinkFor(plan, cfg, uid) {
+    if (!cfg || !cfg.enabled || !cfg.providers) return null;
+    for (var i = 0; i < PAY_PROVIDER_ORDER.length; i++) {
+      var name = PAY_PROVIDER_ORDER[i];
+      var link = cfg.providers[name] && cfg.providers[name][plan];
+      if (link) {
+        var sep = link.indexOf("?") === -1 ? "?" : "&";
+        var param = name === "stripe" ? "client_reference_id=" : "uid=";
+        return { provider: name, url: link + sep + param + encodeURIComponent(uid || "") };
+      }
+    }
+    return null;
+  }
+
   function initPlans() {
     var current = planKey();
     $all("[data-plan-card]").forEach(function (card) {
@@ -1292,13 +1320,22 @@
       }
     });
     var note = $("#pay-note");
+    var uid = session && session.user ? session.user.id : "";
     $all(".paid-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        if (note) {
-          note.hidden = false;
-          note.textContent = "Card payments open soon — your free plan keeps working. We will email you the moment paid plans launch; nothing is charged today.";
-        }
-      });
+      var found = payLinkFor(btn.getAttribute("data-plan"), window.IEP_PAY, uid);
+      if (found) {
+        btn.textContent = "Subscribe";
+        btn.addEventListener("click", function () {
+          window.open(found.url, "_blank", "noopener");
+        });
+      } else {
+        btn.addEventListener("click", function () {
+          if (note) {
+            note.hidden = false;
+            note.textContent = "Card payments open soon — your free plan keeps working. We will email you the moment paid plans launch; nothing is charged today.";
+          }
+        });
+      }
     });
   }
 
@@ -1331,6 +1368,7 @@
     buildMeetingPack: buildMeetingPack,
     weekStartISO: weekStartISO,
     monthRange: monthRange,
+    payLinkFor: payLinkFor,
     getProfile: function () { return profile; },
     getSession: function () { return session; }
   };
