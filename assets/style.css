@@ -186,6 +186,13 @@ section.block{margin:44px 0}
   background:var(--mint) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6.5 4.8 9 10 3.2' fill='none' stroke='%23178a4c' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center/11px no-repeat}
 .ticks li b{color:var(--navy)}
 
+/* meeting checklist (print-friendly tick boxes) */
+.checklist{list-style:none;display:grid;gap:11px;margin-top:12px}
+.checklist li{display:flex;gap:11px;align-items:flex-start}
+.checklist .box{flex:none;width:19px;height:19px;margin-top:2px;border:2px solid var(--navy);border-radius:5px;background:#fff}
+.checklist p{font-size:15px;color:var(--ink-soft);margin:0}
+.checklist p b{color:var(--navy)}
+
 /* clock chips */
 .clock-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .clock-chips span{font-size:13px;font-weight:700;color:var(--navy);background:rgba(255,255,255,.8);border:1px solid var(--line);border-radius:10px;padding:7px 11px}
