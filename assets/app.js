@@ -12,10 +12,13 @@
   var SUPABASE_URL = window.IEPAuth.SUPABASE_URL;
   var ANON_KEY = window.IEPAuth.ANON_KEY;
 
+  // FULL FREE (founder order 2026-11-15): every plan key maps to the same
+  // unlimited Free limits — no child/document/service caps, full history
+  // everywhere. The keys stay so stored profiles keep resolving.
   var PLAN_LIMITS = {
-    free:    { label: "Free",    children: 1, documents: 5,   services: 1,  serviceHistory: "month" },
-    monthly: { label: "Monthly", children: 5, documents: 200, services: 10, serviceHistory: "all" },
-    yearly:  { label: "Yearly",  children: 5, documents: 200, services: 10, serviceHistory: "all" }
+    free:    { label: "Free", children: 999, documents: 99999, services: 999, serviceHistory: "all" },
+    monthly: { label: "Free", children: 999, documents: 99999, services: 999, serviceHistory: "all" },
+    yearly:  { label: "Free", children: 999, documents: 99999, services: 999, serviceHistory: "all" }
   };
 
   var session = null;
@@ -205,7 +208,7 @@
   // every other deadline shows the meaning + first step, with the
   // remaining steps behind a calm plans note. Paid shows all in full.
   function whatNextFull(childDeadlines, d) {
-    if (planKey() !== "free") return true;
+    return true; // full free: the complete guide shows for every deadline
     var WN = window.IEPWhatNext;
     return WN ? WN.isNextDeadline(childDeadlines, d, todayISO()) : false;
   }
@@ -225,9 +228,7 @@
     } else {
       inner += '<p class="wn-head">First step you can take</p>' +
         '<p class="meta">' + esc(b.steps[0]) + "</p>" +
-        '<div class="limit-note">The full step-by-step guide for every deadline is part of paid plans — ' +
-        "your " + limits().label + " plan shows it in full for the next deadline only. " +
-        '<a href="plans.html">See plans</a></div>';
+        '';
     }
     inner += '<p class="meta wn-cite">' + esc(b.cite) + "</p>" +
       '<p class="meta">' + esc(WN.DISCLAIMER) + "</p>";
@@ -546,11 +547,9 @@
     function render() {
       var lim = limits();
       if (note) {
-        note.innerHTML = childrenCache.length >= lim.children
-          ? 'Your <strong>' + lim.label + '</strong> plan covers ' + lim.children + (lim.children === 1 ? ' child' : ' children') +
-            ' — you have reached the limit. <a href="plans.html">See plans</a> to track more children.'
-          : 'Your <strong>' + lim.label + '</strong> plan covers ' + lim.children + (lim.children === 1 ? ' child' : ' children') +
-            ' (' + childrenCache.length + ' added).';
+        note.innerHTML = 'You are tracking ' + childrenCache.length +
+          (childrenCache.length === 1 ? ' child' : ' children') +
+          ' — free, for every child in your family.';
       }
       var submit = $("#child-submit");
       if (submit && !$("#c-id").value) submit.disabled = childrenCache.length >= lim.children;
@@ -678,8 +677,7 @@
     function render() {
       var lim = limits();
       if (countEl) {
-        countEl.innerHTML = docsCache.length + ' of ' + lim.documents + ' files on your <strong>' + lim.label + '</strong> plan.' +
-          (docsCache.length >= lim.documents ? ' Limit reached — <a href="plans.html">see plans</a> for more space.' : '');
+        countEl.innerHTML = docsCache.length + (docsCache.length === 1 ? ' file' : ' files') + ' stored — free, with no file limit.';
       }
       $("#doc-submit").disabled = docsCache.length >= lim.documents;
       if (!docsCache.length) {
@@ -848,8 +846,7 @@
     function renderPager() {
       var cur = monthKeyOf(todayISO());
       if (historyLocked()) {
-        pagerEl.innerHTML = '<p class="meta">Showing <strong>' + monthLabel(cur) + '</strong> — your ' +
-          limits().label + ' plan shows the current month. <a href="plans.html">See plans</a> for the full history.</p>';
+        pagerEl.innerHTML = '<p class="meta">Showing <strong>' + monthLabel(cur) + '</strong>.</p>';
         return;
       }
       pagerEl.innerHTML = '<div class="card-actions">' +
@@ -871,12 +868,9 @@
       var editing = !!$("#svc-id").value;
       if (!childrenCache.length) {
         note.innerHTML = 'Services are tracked per child — <a href="children.html">add your child</a> first, then add the services in their IEP.';
-      } else if (servicesCache.length >= lim.services && !editing) {
-        note.innerHTML = 'Your <strong>' + lim.label + '</strong> plan covers ' + lim.services +
-          (lim.services === 1 ? ' service' : ' services') + ' — you have reached the limit. <a href="plans.html">See plans</a> to track more.';
       } else {
-        note.innerHTML = 'Your <strong>' + lim.label + '</strong> plan covers ' + lim.services +
-          (lim.services === 1 ? ' service' : ' services') + ' (' + servicesCache.length + ' added).';
+        note.innerHTML = 'You are tracking ' + servicesCache.length +
+          (servicesCache.length === 1 ? ' service' : ' services') + ' — free, with no limit.';
       }
       $("#svc-submit").disabled = !childrenCache.length || (!editing && servicesCache.length >= lim.services);
 
@@ -1259,12 +1253,8 @@
     $("#set-email").textContent = session.user.email;
     $("#set-name").value = profile.display_name || "";
     fillStateSelect($("#set-state"), profile.state || "");
-    $("#set-plan").innerHTML = '<strong>' + limits().label + '</strong> plan · ' +
-      limits().children + (limits().children === 1 ? ' child' : ' children') + ', ' +
-      limits().documents + ' documents, ' +
-      limits().services + (limits().services === 1 ? ' service' : ' services') +
-      (limits().serviceHistory === 'all' ? ' with full minute history' : ' with this month of minute history') +
-      '. <a href="plans.html">Compare plans</a>';
+    $("#set-plan").innerHTML = '<strong>Free</strong> plan · every child, every document, every service — ' +
+      'with the full minute history. Everything is included, for everyone.';
     $("#set-form").addEventListener("submit", function (ev) {
       ev.preventDefault();
       apiPatch("profiles", "id=eq." + session.user.id, {
